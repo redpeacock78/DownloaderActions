@@ -47,4 +47,4 @@ jobs:
             -H "Accept: application/json" \
             -H "Content-type: application/json" \
             -d '{ "channel" : ${{ toJSON(github.event.client_payload.channel) }}, "title": "'"${file}"'", "link": "'"${LINK}"'" }' \
-            https://MgDownloader.redpeacock78.repl.co/post
+          https://mg-bot.vercel.app/post

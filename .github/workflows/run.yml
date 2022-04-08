@@ -1,0 +1,36 @@
+name: DownloaderAction
+on:
+  repository_dispatch:
+    types:
+      - downloaderaction
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    name: Run
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Change Directory
+        shell: bash
+        run: |
+          mkdir -p download && \
+          cd download
+      - name: Docker Run
+        shell: bash
+        run: |
+          docker run --rm -it \
+            -p 6988:6988 \
+            -p 6982:6982/udp \
+            -v $(pwd):/download \
+            redpeacock78/downloaderaction:latest \
+            ${{ toJSON(github.event.client_payload.link) }}
+      - name: Upload
+        id: anonfiles
+        shell: bash
+        run: |
+          echo "::set-output name=json::$(curl -s -F "file=@$(ls)" https://api.anonfiles.com/upload)"
+      - name: Result
+        shell: bash
+        run: |
+          echo "https://anonfiles-api.vercel.app/${{ fromJson(steps.anonfiles.outputs.json).data.file.metadata.id }}/${{ fromJson(steps.anonfiles.outputs.json).data.file.metadata.name }}"

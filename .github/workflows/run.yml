@@ -19,7 +19,7 @@ jobs:
       - name: Docker Run
         shell: bash
         run: |
-          docker run --rm -it \
+          docker run --rm -i \
             -p 6988:6988 \
             -p 6982:6982/udp \
             -v $(pwd):/download \

@@ -29,7 +29,9 @@ jobs:
         id: anonfiles
         shell: bash
         run: |
-          echo "::set-output name=json::$(curl -s -F "file=@$(ls)" https://api.anonfiles.com/upload)"
+          file="$(ls)" && \
+          json="$(curl -s -F "file=@${file}" https://api.anonfiles.com/upload)" && \
+          echo "::set-output name=json::${json}"
       - name: Result
         shell: bash
         run: |

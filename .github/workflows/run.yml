@@ -35,4 +35,7 @@ jobs:
       - name: Result
         shell: bash
         run: |
-          echo "https://anonfiles-api.vercel.app/${{ fromJson(steps.anonfiles.outputs.json).data.file.metadata.id }}/${{ fromJson(steps.anonfiles.outputs.json).data.file.metadata.name }}"
+          id="${{ fromJson(steps.anonfiles.outputs.json).data.file.metadata.id }}" && \
+          file="${{ fromJson(steps.anonfiles.outputs.json).data.file.metadata.name }}" && \
+          link="https://anonfiles-api.vercel.app/${id}/${file}" && \
+          od -An -vtx1 <<<"${link}"|awk 'BEGIN{ORS=""}{gsub(" ", "%", $0);print toupper($0)}'

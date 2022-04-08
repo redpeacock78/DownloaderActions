@@ -11,14 +11,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Change Directory
+      - name: Make Directory
         shell: bash
-        run: |
-          mkdir -p download && \
-          cd download
+        run: mkdir -p download
       - name: Docker Run
         shell: bash
         run: |
+          cd download && \
           docker run --rm -i \
             -p 6988:6988 \
             -p 6982:6982/udp \
@@ -29,6 +28,7 @@ jobs:
         id: anonfiles
         shell: bash
         run: |
+          cd download && \
           file="$(ls)" && \
           json="$(curl -s -F "file=@${file}" https://api.anonfiles.com/upload)" && \
           echo "::set-output name=json::${json}"

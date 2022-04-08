@@ -37,7 +37,7 @@ jobs:
           json="$(curl -s -F "file=@${file}" https://api.anonfiles.com/upload)" && \
           echo "::set-output name=json::${json}"
       - name: Result
-        shell: node
+        shell: bash
         run: |
           id="${{ fromJson(steps.anonfiles.outputs.json).data.file.metadata.id }}" && \
           file="${{ fromJson(steps.anonfiles.outputs.json).data.file.metadata.name }}" && \

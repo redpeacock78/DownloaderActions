@@ -11,6 +11,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '14'
       - name: Make Directory
         shell: bash
         run: mkdir -p download
@@ -33,9 +37,9 @@ jobs:
           json="$(curl -s -F "file=@${file}" https://api.anonfiles.com/upload)" && \
           echo "::set-output name=json::${json}"
       - name: Result
-        shell: bash
+        shell: node
         run: |
           id="${{ fromJson(steps.anonfiles.outputs.json).data.file.metadata.id }}" && \
           file="${{ fromJson(steps.anonfiles.outputs.json).data.file.metadata.name }}" && \
           link="https://anonfiles-api.vercel.app/${id}/${file}" && \
-          od -An -vtx1 <<<"${link}"|awk 'BEGIN{ORS=""}{gsub(" ", "%", $0);print toupper($0)}'
+          node -e "console.log(encodeURI('${link}'))"

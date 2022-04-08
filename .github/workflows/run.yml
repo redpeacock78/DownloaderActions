@@ -42,9 +42,9 @@ jobs:
           id="${{ fromJson(steps.anonfiles.outputs.json).data.file.metadata.id }}" && \
           file="${{ fromJson(steps.anonfiles.outputs.json).data.file.metadata.name }}" && \
           link="https://anonfiles-api.vercel.app/${id}/${file}" && \
-          LINK="$(node -e "console.log(encodeURI('${link}'))")"
+          LINK="$(node -e "console.log(encodeURI('${link}'))")" && \
           curl -s -X POST \
             -H "Accept: application/json" \
             -H "Content-type: application/json" \
-            -d '{ "channel" : ${{ toJSON(github.event.client_payload.channel) }}, "title": "'"${file}"'", "link": "'"${LINK}"'" }' \
-          https://mg-bot.vercel.app/post
+            -d '{ "channel": ${{ toJSON(github.event.client_payload.channel) }}, "title": "'"${file}"'", "link": "'"${LINK}"'" }' \
+            https://MgDownloader.redpeacock78.repl.co/post

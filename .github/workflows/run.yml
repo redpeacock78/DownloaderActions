@@ -49,4 +49,4 @@ jobs:
             -H "Accept: application/json" \
             -H "Content-type: application/json" \
             -d '{ "channel": ${{ toJSON(github.event.client_payload.channel) }}, "title": "'"${file}"'", "size": "'"${size}"'", "link": "'"${LINK}"'" }' \
-            ${{ secrets.ENDPOINT_URL }}
+            https://mg-downloader.herokuapp.com/post

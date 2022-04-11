@@ -45,8 +45,17 @@ jobs:
           link="https://anonfiles-api.vercel.app/${id}/${file}" && \
           LINK="$(node -e "console.log(encodeURI('${link}'))")" && \
           size="$(ls -lh|awk '{print $5}')" && \
+          data=$(cat <<EOF
+          {
+            "channel": ${{ toJSON(github.event.client_payload.channel) }},
+            "title": "${file}",
+            "size": "${size}",
+            "link": "${LINK}"
+          }
+          EOF
+          ) && \
           curl -s -X POST \
             -H "Accept: application/json" \
             -H "Content-type: application/json" \
-            -d '{ "channel": ${{ toJSON(github.event.client_payload.channel) }}, "title": "'${file}'", "size": "'${size}'", "link": "'${LINK}'" }' \
-          ${{ secrets.ENDPOINT_URL }}
+            -d "${data}" \
+            ${{ secrets.ENDPOINT_URL }}

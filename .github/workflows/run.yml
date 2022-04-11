@@ -39,6 +39,7 @@ jobs:
       - name: Result
         shell: bash
         run: |
+          cd download && \
           id="${{ fromJson(steps.anonfiles.outputs.json).data.file.metadata.id }}" && \
           file="${{ fromJson(steps.anonfiles.outputs.json).data.file.metadata.name }}" && \
           link="https://anonfiles-api.vercel.app/${id}/${file}" && \

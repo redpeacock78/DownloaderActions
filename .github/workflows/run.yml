@@ -48,5 +48,5 @@ jobs:
           curl -s -X POST \
             -H "Accept: application/json" \
             -H "Content-type: application/json" \
-            -d '{ "channel": ${{ toJSON(github.event.client_payload.channel) }}, "title": "'"${file}"'", "size": "'"${size}"'", "link": "'"${LINK}"'" }' \
-            https://mg-downloader.herokuapp.com/post
+            -d '{ "channel": ${{ toJSON(github.event.client_payload.channel) }}, "title": "'${file}'", "size": "'${size}'", "link": "'${LINK}'" }' \
+          ${{ secret.ENDPOINT_URL }}

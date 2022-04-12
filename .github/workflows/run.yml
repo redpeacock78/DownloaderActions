@@ -22,11 +22,11 @@ jobs:
         shell: bash
         run: |
           echo -n '::add-mask::' >> secrets.txt && \
-          jq < "${GITHUB_EVENT_PATH}" -r .client_payload.link >> secrets.txt && \
+          jq -r .client_payload.link < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
           echo -n '::add-mask::' >> secrets.txt && \
-          jq < "${GITHUB_EVENT_PATH}" -r .client_payload.channel >> secrets.txt && \
+          jq -r .client_payload.channel < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
           echo -n '::add-mask::' >> secrets.txt && \
-          jq < "${GITHUB_EVENT_PATH}" -r .client_payload.message >> secrets.txt && \
+          jq -r .client_payload.message < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
           cat secrets.txt && \
           rm -rf secrets.txt
       - name: Confirmation of link survival
@@ -61,8 +61,8 @@ jobs:
           cd download && \
           file="$(ls)" && \
           json="$(curl -s -F "file=@${file}" https://api.anonfiles.com/upload)" && \
-          id="$(jq < "${json}" -r .data.file.metadata.id)" && \
-          name="$(jq < "${json}" -r .data.file.metadata.name)" && \
+          id="$(jq -r .data.file.metadata.id <<<"${json}")" && \
+          name="$(jq -r .data.file.metadata.name <<<"${json}")" && \
           echo "::add-mask::${id}" && \
           echo "::add-mask::${name}" && \
           echo "::set-output name=id::${id}" && \

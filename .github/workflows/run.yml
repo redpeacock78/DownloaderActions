@@ -73,7 +73,7 @@ jobs:
         run: |
           cd download && \
           size="$(ls -lh|awk '{print $5}')" && \
-          type="$(file "${name}"|awk -F : '{sub(/^ /,"",$2);print $2}')" && \
+          type="$(file "${{ steps.anonfiles.outputs.name }}"|awk -F : '{sub(/^ /,"",$2);print $2}')" && \
           link="$(node -e "console.log(encodeURI('https://anonfiles-api.vercel.app/${{ steps.anonfiles.outputs.id }}/${{ steps.anonfiles.outputs.name }}'))")" && \
           curl -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \

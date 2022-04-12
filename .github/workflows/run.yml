@@ -22,11 +22,11 @@ jobs:
         shell: bash
         run: |
           echo -n '::add-mask::' >> secrets.txt && \
-          jq < "${GITHUB_EVENT_PATH}" -r .client_payload.link >> cmd.txt && \
+          jq < "${GITHUB_EVENT_PATH}" -r .client_payload.link >> secrets.txt && \
           echo -n '::add-mask::' >> secrets.txt && \
-          jq < "${GITHUB_EVENT_PATH}" -r .client_payload.channel >> cmd.txt && \
+          jq < "${GITHUB_EVENT_PATH}" -r .client_payload.channel >> secrets.txt && \
           echo -n '::add-mask::' >> secrets.txt && \
-          jq < "${GITHUB_EVENT_PATH}" -r .client_payload.message >> cmd.txt && \
+          jq < "${GITHUB_EVENT_PATH}" -r .client_payload.message >> secrets.txt && \
           cat secrets.txt && \
           rm -rf secrets.txt
       - name: Confirmation of link survival

@@ -25,7 +25,7 @@ jobs:
           if [[ ${{ toJSON(github.event.client_payload.link) }} =~ ^http.*$ ]]; then
             status="$(curl -siL ${{ toJSON(github.event.client_payload.link) }} -o /dev/null -w '%{http_code}\n')"
             if [[ "${status}" != "200" ]]; then
-              message="This link has expired." && \
+              message="Sorry! This link has expired." && \
               echo "::set-output name=message::${message}" && \
               exit 2
             fi

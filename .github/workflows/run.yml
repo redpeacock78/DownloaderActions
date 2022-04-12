@@ -36,8 +36,8 @@ jobs:
           if [[ ${{ toJSON(github.event.client_payload.link) }} =~ ^http.*$ ]]; then
             status="$(curl -siL ${{ toJSON(github.event.client_payload.link) }} -o /dev/null -w '%{http_code}\n')"
             if [[ "${status}" != "200" ]]; then
-              message="Sorry! This link has expired." && \
-              echo "::set-output name=message::${message}" && \
+              status="notfound" && \
+              echo "::set-output name=status::${status}" && \
               exit 2
             fi
           fi
@@ -61,19 +61,20 @@ jobs:
           cd download && \
           file="$(ls)" && \
           json="$(curl -s -F "file=@${file}" https://api.anonfiles.com/upload)" && \
-          echo "::add-mask::${json}" && \
-          echo "::set-output name=json::${json}"
+          id="$(jq < "${json}" -r .data.file.metadata.id)" && \
+          name="$(jq < "${json}" -r .data.file.metadata.name)" && \
+          echo "::add-mask::${id}" && \
+          echo "::add-mask::${name}" && \
+          echo "::set-output name=id::${id}" && \
+          echo "::set-output name=file::${name}"
       - name: "If successful: Access callback URL"
         if: ${{ success() }}
         shell: bash
         run: |
           cd download && \
-          id="${{ fromJson(steps.anonfiles.outputs.json).data.file.metadata.id }}" && \
-          file="${{ fromJson(steps.anonfiles.outputs.json).data.file.metadata.name }}" && \
-          link="https://anonfiles-api.vercel.app/${id}/${file}" && \
-          LINK="$(node -e "console.log(encodeURI('${link}'))")" && \
           size="$(ls -lh|awk '{print $5}')" && \
           type="$(file "${file}"|awk -F : '{sub(/^ /,"",$2);print $2}')" && \
+          link="$(node -e "console.log(encodeURI('https://anonfiles-api.vercel.app/${{ steps.anonfiles.outputs.id }}/${{ steps.anonfiles.outputs.name }}'))")" && \
           curl -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \
@@ -83,17 +84,17 @@ jobs:
             "status": "success",
             "channel": ${{ toJSON(github.event.client_payload.channel) }},
             "message": ${{ toJSON(github.event.client_payload.message) }},
-            "title": "${file}",
+            "title": "${{ steps.anonfiles.outputs.name }}",
             "size": "${size}",
             "type": "${type}",
-            "link": "${LINK}"
+            "link": "${link}"
           }
           EOF
       - name: Not Found
         if: >-
           ${{
             failure() &&
-            steps.link_status.outputs.message != ''
+            steps.link_status.outputs.status != ''
           }}
         shell: bash
         run: |
@@ -107,14 +108,14 @@ jobs:
             "channel": ${{ toJSON(github.event.client_payload.channel) }},
             "message": ${{ toJSON(github.event.client_payload.message) }},
             "link": ${{ toJSON(github.event.client_payload.link) }},
-            "content": "${{ steps.link_status.outputs.message }}"
+            "content": "Sorry! This link has expired."
           }
           EOF
       - name: Time Out
         if: >-
           ${{
             failure() &&
-            steps.link_status.outputs.message == ''
+            steps.link_status.outputs.status == ''
           }}
         shell: bash
         run: |

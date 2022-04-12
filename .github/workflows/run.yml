@@ -15,10 +15,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '14'
-      - name: Make Directory
+      - name: Create directory
         shell: bash
         run: mkdir -p download
-      - name: Docker Run
+      - name: Start Docker
         shell: bash
         run: |
           cd download && \
@@ -28,7 +28,7 @@ jobs:
             -v $(pwd):/download \
             redpeacock78/downloaderaction:latest \
             ${{ toJSON(github.event.client_payload.link) }}
-      - name: Upload
+      - name: Upload files to anonfiles
         id: anonfiles
         shell: bash
         run: |
@@ -36,7 +36,7 @@ jobs:
           file="$(ls)" && \
           json="$(curl -s -F "file=@${file}" https://api.anonfiles.com/upload)" && \
           echo "::set-output name=json::${json}"
-      - name: Result
+      - name: Access callback URL
         shell: bash
         run: |
           cd download && \
@@ -52,6 +52,7 @@ jobs:
             -d @- <<EOF
           {
             "channel": ${{ toJSON(github.event.client_payload.channel) }},
+            "message": ${{ toJSON(github.event.client_payload.message) }},
             "title": "${file}",
             "size": "${size}",
             "link": "${LINK}"

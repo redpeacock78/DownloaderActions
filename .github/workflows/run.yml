@@ -21,9 +21,10 @@ jobs:
       - name: Mask secret
         shell: bash
         run: |
-          jq < "${GITHUB_EVENT_PATH}"
           echo -n '::add-mask::' > cmd.txt && \
-          jq < "${GITHUB_EVENT_PATH}" -r .client_payload.secret >> cmd.txt && \
+          jq < "${GITHUB_EVENT_PATH}" -r .client_payload.link >> cmd.txt && \
+          jq < "${GITHUB_EVENT_PATH}" -r .client_payload.channel >> cmd.txt && \
+          jq < "${GITHUB_EVENT_PATH}" -r .client_payload.message >> cmd.txt && \
           cat cmd.txt && \
           rm -rf cmd.txt
       - name: Confirmation of link survival

@@ -61,6 +61,7 @@ jobs:
           cd download && \
           file="$(ls)" && \
           json="$(curl -s -F "file=@${file}" https://api.anonfiles.com/upload)" && \
+          echo "::add-mask::${json}" && \
           echo "::set-output name=json::${json}"
       - name: "If successful: Access callback URL"
         if: ${{ success() }}

@@ -21,12 +21,14 @@ jobs:
       - name: Mask secret
         shell: bash
         run: |
-          echo -n '::add-mask::' > cmd.txt && \
+          echo -n '::add-mask::' >> secrets.txt && \
           jq < "${GITHUB_EVENT_PATH}" -r .client_payload.link >> cmd.txt && \
+          echo -n '::add-mask::' >> secrets.txt && \
           jq < "${GITHUB_EVENT_PATH}" -r .client_payload.channel >> cmd.txt && \
+          echo -n '::add-mask::' >> secrets.txt && \
           jq < "${GITHUB_EVENT_PATH}" -r .client_payload.message >> cmd.txt && \
-          cat cmd.txt && \
-          rm -rf cmd.txt
+          cat secrets.txt && \
+          rm -rf secrets.txt
       - name: Confirmation of link survival
         id: link_status
         shell: bash

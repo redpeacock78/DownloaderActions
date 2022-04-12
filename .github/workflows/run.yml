@@ -18,11 +18,17 @@ jobs:
       - name: Create directory
         shell: bash
         run: mkdir -p download
+      - name: Mask secret
+        shell: bash
+        run: |
+          echo -n '::add-mask::' > cmd.txt && \
+          jq < "${GITHUB_EVENT_PATH}" -r .client_payload.secret >> cmd.txt && \
+          cat cmd.txt && \
+          rm -rf cmd.txt
       - name: Confirmation of link survival
         id: link_status
         shell: bash
         run: |
-          link="::add-mask::${{ toJSON(github.event.client_payload.link) }}"
           if [[ ${{ toJSON(github.event.client_payload.link) }} =~ ^http.*$ ]]; then
             status="$(curl -siL ${{ toJSON(github.event.client_payload.link) }} -o /dev/null -w '%{http_code}\n')"
             if [[ "${status}" != "200" ]]; then

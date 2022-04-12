@@ -93,7 +93,7 @@ jobs:
             "channel": ${{ toJSON(github.event.client_payload.channel) }},
             "message": ${{ toJSON(github.event.client_payload.message) }},
             "link": ${{ toJSON(github.event.client_payload.link) }},
-            "content": ${{ steps.link_status.outputs.message }}
+            "content": "${{ steps.link_status.outputs.message }}"
           }
           EOF
           else

@@ -23,7 +23,7 @@ jobs:
         shell: bash
         run: |
           if [[ ${{ toJSON(github.event.client_payload.link) }} =~ ^http.*$ ]]; then
-            curl -sL ${{ toJSON(github.event.client_payload.link) }} || \
+            curl -sL ${{ toJSON(github.event.client_payload.link) }} >/dev/null || \
             {
               message="This link has expired." && \
               echo "::set-output name=message::${message}" && \

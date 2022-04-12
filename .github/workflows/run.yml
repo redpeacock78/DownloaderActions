@@ -66,14 +66,14 @@ jobs:
           echo "::add-mask::${id}" && \
           echo "::add-mask::${name}" && \
           echo "::set-output name=id::${id}" && \
-          echo "::set-output name=file::${name}"
+          echo "::set-output name=name::${name}"
       - name: "If successful: Access callback URL"
         if: ${{ success() }}
         shell: bash
         run: |
           cd download && \
           size="$(ls -lh|awk '{print $5}')" && \
-          type="$(file "${file}"|awk -F : '{sub(/^ /,"",$2);print $2}')" && \
+          type="$(file "${name}"|awk -F : '{sub(/^ /,"",$2);print $2}')" && \
           link="$(node -e "console.log(encodeURI('https://anonfiles-api.vercel.app/${{ steps.anonfiles.outputs.id }}/${{ steps.anonfiles.outputs.name }}'))")" && \
           curl -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \

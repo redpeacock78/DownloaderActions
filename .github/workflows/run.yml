@@ -18,7 +18,21 @@ jobs:
       - name: Create directory
         shell: bash
         run: mkdir -p download
+      - name: Confirmation of link survival
+        id: link_status
+        shell: bash
+        run: |
+          if [[ ${{ toJSON(github.event.client_payload.link) }} =~ ^http.*$ ]]; then
+            curl -sL ${{ toJSON(github.event.client_payload.link) }} || \
+            {
+              message="This link has expired." && \
+              echo "::set-output name=message::${message}" && \
+              exit 2
+            }
+          fi
       - name: Start Docker
+        if: ${{ success() }}
+        timeout-minutes: 300
         shell: bash
         run: |
           cd download && \
@@ -29,6 +43,7 @@ jobs:
             redpeacock78/downloaderaction:latest \
             ${{ toJSON(github.event.client_payload.link) }}
       - name: Upload files to anonfiles
+        if: ${{ success() }}
         id: anonfiles
         shell: bash
         run: |
@@ -36,7 +51,8 @@ jobs:
           file="$(ls)" && \
           json="$(curl -s -F "file=@${file}" https://api.anonfiles.com/upload)" && \
           echo "::set-output name=json::${json}"
-      - name: Access callback URL
+      - name: "If successful: Access callback URL"
+        if: ${{ success() }}
         shell: bash
         run: |
           cd download && \
@@ -52,6 +68,7 @@ jobs:
             -H "Content-type: application/json" \
             -d @- <<EOF
           {
+            "status": "success",
             "channel": ${{ toJSON(github.event.client_payload.channel) }},
             "message": ${{ toJSON(github.event.client_payload.message) }},
             "title": "${file}",
@@ -60,3 +77,36 @@ jobs:
             "link": "${LINK}"
           }
           EOF
+      - name: "If failed: Access callback URL"
+        if: ${{ failure() }}
+        shell: bash
+        run: |
+         if [[ -z　${{ steps.link_status.outputs.message }} ]]; then
+           curl -s -X POST \
+             ${{ secrets.ENDPOINT_URL }} \
+             -H "Accept: application/json" \
+             -H "Content-type: application/json" \
+             -d @- <<EOF
+         {
+           "status": "failure",
+           "channel": ${{ toJSON(github.event.client_payload.channel) }},
+           "message": ${{ toJSON(github.event.client_payload.message) }},
+           "link": ${{ toJSON(github.event.client_payload.link) }},
+           "content": ${{ steps.link_status.outputs.message }}
+         }
+         EOF
+         else
+           curl -s -X POST \
+             ${{ secrets.ENDPOINT_URL }} \
+             -H "Accept: application/json" \
+             -H "Content-type: application/json" \
+             -d @- <<EOF
+         {
+           "status": "failure",
+           "channel": ${{ toJSON(github.event.client_payload.channel) }},
+           "message": ${{ toJSON(github.event.client_payload.message) }},
+           "link": ${{ toJSON(github.event.client_payload.link) }},
+           "content": "Sorry! Processing time exceeded 5 hours and timed out."
+         }
+         EOF
+         fi

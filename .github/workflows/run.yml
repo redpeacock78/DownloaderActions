@@ -23,12 +23,11 @@ jobs:
         shell: bash
         run: |
           if [[ ${{ toJSON(github.event.client_payload.link) }} =~ ^http.*$ ]]; then
-            curl -sL ${{ toJSON(github.event.client_payload.link) }} >/dev/null || \
-            {
+            if [[ $(curl -siL ${{ toJSON(github.event.client_payload.link) }} -o /dev/null -w '%{http_code}\n' != "200" ]]; then
               message="This link has expired." && \
               echo "::set-output name=message::${message}" && \
               exit 2
-            }
+            fi
           fi
       - name: Start Docker
         if: ${{ success() }}

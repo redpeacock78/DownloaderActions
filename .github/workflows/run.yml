@@ -81,32 +81,33 @@ jobs:
         if: ${{ failure() }}
         shell: bash
         run: |
-         if [[ -z　${{ steps.link_status.outputs.message }} ]]; then
-           curl -s -X POST \
-             ${{ secrets.ENDPOINT_URL }} \
-             -H "Accept: application/json" \
-             -H "Content-type: application/json" \
-             -d @- <<EOF
-         {
-           "status": "failure",
-           "channel": ${{ toJSON(github.event.client_payload.channel) }},
-           "message": ${{ toJSON(github.event.client_payload.message) }},
-           "link": ${{ toJSON(github.event.client_payload.link) }},
-           "content": ${{ steps.link_status.outputs.message }}
-         }
-         EOF
-         else
-           curl -s -X POST \
-             ${{ secrets.ENDPOINT_URL }} \
-             -H "Accept: application/json" \
-             -H "Content-type: application/json" \
-             -d @- <<EOF
-         {
-           "status": "failure",
-           "channel": ${{ toJSON(github.event.client_payload.channel) }},
-           "message": ${{ toJSON(github.event.client_payload.message) }},
-           "link": ${{ toJSON(github.event.client_payload.link) }},
-           "content": "Sorry! Processing time exceeded 5 hours and timed out."
-         }
-         EOF
-         fi
+          link_status="${{ steps.link_status.outputs.message }}"
+          if [[ -z　"${link_status}" ]]; then
+            curl -s -X POST \
+              ${{ secrets.ENDPOINT_URL }} \
+              -H "Accept: application/json" \
+              -H "Content-type: application/json" \
+              -d @- <<EOF
+          {
+            "status": "failure",
+            "channel": ${{ toJSON(github.event.client_payload.channel) }},
+            "message": ${{ toJSON(github.event.client_payload.message) }},
+            "link": ${{ toJSON(github.event.client_payload.link) }},
+            "content": ${{ steps.link_status.outputs.message }}
+          }
+          EOF
+          else
+            curl -s -X POST \
+              ${{ secrets.ENDPOINT_URL }} \
+              -H "Accept: application/json" \
+              -H "Content-type: application/json" \
+              -d @- <<EOF
+          {
+            "status": "failure",
+            "channel": ${{ toJSON(github.event.client_payload.channel) }},
+            "message": ${{ toJSON(github.event.client_payload.message) }},
+            "link": ${{ toJSON(github.event.client_payload.link) }},
+            "content": "Sorry! Processing time exceeded 5 hours and timed out."
+          }
+          EOF
+          fi

@@ -22,6 +22,7 @@ jobs:
         id: link_status
         shell: bash
         run: |
+          link="::add-mask::${{ toJSON(github.event.client_payload.link) }}"
           if [[ ${{ toJSON(github.event.client_payload.link) }} =~ ^http.*$ ]]; then
             status="$(curl -siL ${{ toJSON(github.event.client_payload.link) }} -o /dev/null -w '%{http_code}\n')"
             if [[ "${status}" != "200" ]]; then

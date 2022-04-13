@@ -52,6 +52,13 @@ jobs:
             -p 6982:6982/udp \
             -v $(pwd):/download \
             redpeacock78/downloaderaction:latest \
+            -s20 -j20 -x16 -k20M \
+            --seed-time=0 \
+            --max-tries=0 \
+            --retry-wait=10 \
+            --summary-interval=0 \
+            --download-result=hide \
+            --console-log-level=error \
             ${{ toJSON(github.event.client_payload.link) }}
       - name: Upload files to anonfiles
         if: ${{ success() }}

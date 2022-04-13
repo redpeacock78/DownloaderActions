@@ -18,7 +18,7 @@ jobs:
       - name: Create directory
         shell: bash
         run: mkdir -p download
-      - name: Mask secret
+      - name: Masking Secrets
         shell: bash
         run: |
           echo -n '::add-mask::' >> secrets.txt && \
@@ -70,16 +70,18 @@ jobs:
           json="$(curl -s -F "file=@${file}" https://api.anonfiles.com/upload)" && \
           id="$(jq -r .data.file.metadata.id <<<"${json}")" && \
           name="$(jq -r .data.file.metadata.name <<<"${json}")" && \
+          size="$(jq -r .data.file.metadata.size.readable <<<"${json}")"
           echo "::add-mask::${id}" && \
           echo "::add-mask::${name}" && \
+          echo "::add-mask::${size}" && \
           echo "::set-output name=id::${id}" && \
-          echo "::set-output name=name::${name}"
-      - name: "If successful: Access callback URL"
+          echo "::set-output name=name::${name}" && \
+          echo "::set-output name=size::${size}"
+      - name: All succeeded
         if: ${{ success() }}
         shell: bash
         run: |
           cd download && \
-          size="$(ls -lh|awk '{print $5}')" && \
           type="$(file "${{ steps.anonfiles.outputs.name }}"|awk -F : '{sub(/^ /,"",$2);print $2}')" && \
           link="$(node -e "console.log(encodeURI('https://anonfiles-api.vercel.app/${{ steps.anonfiles.outputs.id }}/${{ steps.anonfiles.outputs.name }}'))")" && \
           curl -s -X POST \
@@ -92,12 +94,12 @@ jobs:
             "channel": ${{ toJSON(github.event.client_payload.channel) }},
             "message": ${{ toJSON(github.event.client_payload.message) }},
             "title": "${{ steps.anonfiles.outputs.name }}",
-            "size": "${size}",
+            "size": "${{ steps.anonfiles.outputs.size }}",
             "type": "${type}",
             "link": "${link}"
           }
           EOF
-      - name: Not Found
+      - name: Download file not found
         if: >-
           ${{
             failure() &&
@@ -118,7 +120,7 @@ jobs:
             "content": "Sorry! This link has expired."
           }
           EOF
-      - name: Time Out
+      - name: Download timed out
         if: >-
           ${{
             failure() &&

@@ -96,7 +96,8 @@ jobs:
             "title": "${{ steps.anonfiles.outputs.name }}",
             "size": "${{ steps.anonfiles.outputs.size }}",
             "type": "${type}",
-            "link": "${link}"
+            "link": "${link}",
+            "origin_link": ${{ toJSON(github.event.client_payload.link) }},
           }
           EOF
       - name: Download file not found

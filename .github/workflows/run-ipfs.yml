@@ -67,6 +67,7 @@ jobs:
         run: |
           cd download && \
           json="$(curl -s -X POST -F file=@"$(ls)" https://demo.storj-ipfs.com/api/v0/add)" && \
+          echo "${json}" && \
           name="$(jq -r .Name <<<"${json}")" && \
           hash="$(jq -r .Hash <<<"${json}")" && \
           size="$(jq -r .Size <<<"${json}")"

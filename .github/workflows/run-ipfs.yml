@@ -29,72 +29,55 @@ jobs:
           jq -r .client_payload.message < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
           cat secrets.txt && \
           rm -rf secrets.txt
+      - name: Start Tor Proxy
+        shell: bash
+        run: |
+          docker run -it -d \
+            -p 8118:8118 \
+            -p 9050:9050 \
+            --name tor-proxy \
+            dperson/torproxy:latest && \
+          sleep 20
       - name: Confirmation of link survival
         id: link_status
         shell: bash
         run: |
-          if [[ ${{ toJSON(github.event.client_payload.link) }} =~ ^http.*$ && ! ${{ toJSON(github.event.client_payload.link) }} =~ \.onion ]]; then
-            status="$(curl -siL ${{ toJSON(github.event.client_payload.link) }} -o /dev/null -w '%{http_code}\n')"
+          if [[ ${{ toJSON(github.event.client_payload.link) }} =~ ^http.*$ ]]; then
+            status="$(curl -siL -x http://localhost:8118 ${{ toJSON(github.event.client_payload.link) }} -o /dev/null -w '%{http_code}\n')"
             if [[ "${status}" != "200" ]]; then
               status="notfound" && \
               echo "::set-output name=status::${status}" && \
               exit 2
             fi
           fi
-      - name: Start Docker
+      - name: Start Downloader Action
         if: ${{ success() }}
         timeout-minutes: 300
         shell: bash
         run: |
           cd download && \
-          if [[ ${{ toJSON(github.event.client_payload.link) }} =~ \.onion ]]; then
-            docker run -it -d \
-              -p 8118:8118 \
-              -p 9050:9050 \
-              --name tor-proxy \
-              dperson/torproxy:latest
-            sleep 20 && \
-            docker run --rm -i \
-              -p 6988:6988 \
-              -p 6982:6982/udp \
-              -v $(pwd):/download \
-              --link tor-proxy:tor \
-              redpeacock78/downloaderaction:latest \
-              -s20 -j20 -x16 -k20M \
-              --http-proxy="http://tor:8118" \
-              --seed-time=0 \
-              --max-tries=0 \
-              --retry-wait=10 \
-              --summary-interval=0 \
-              --download-result=hide \
-              --console-log-level=error \
-              ${{ toJSON(github.event.client_payload.link) }}
-          else
-            docker run --rm -i \
-              -p 6988:6988 \
-              -p 6982:6982/udp \
-              -v $(pwd):/download \
-              redpeacock78/downloaderaction:latest \
-              -s20 -j20 -x16 -k20M \
-              --seed-time=0 \
-              --max-tries=0 \
-              --retry-wait=10 \
-              --summary-interval=0 \
-              --download-result=hide \
-              --console-log-level=error \
-              ${{ toJSON(github.event.client_payload.link) }}
-          fi
+          docker run --rm -i \
+            -p 6988:6988 \
+            -p 6982:6982/udp \
+            -v $(pwd):/download \
+            --link tor-proxy:tor \
+            redpeacock78/downloaderaction:latest \
+            -s20 -j20 -x16 -k20M \
+            --http-proxy="http://tor:8118" \
+            --seed-time=0 \
+            --max-tries=0 \
+            --retry-wait=10 \
+            --summary-interval=0 \
+            --download-result=hide \
+            --console-log-level=error \
+            ${{ toJSON(github.event.client_payload.link) }}
       - name: Upload files to ipfs
         if: ${{ success() }}
         id: anonfiles
         shell: bash
         run: |
           cd download
-          if [[ ${{ toJSON(github.event.client_payload.link) }} =~ \.onion ]]; then
-            json="$(curl -s -x http://localhost:8118 -X POST -F file=@"$(ls)" https://demo.storj-ipfs.com/api/v0/add)"
-          else
-            json="$(curl -s -X POST -F file=@"$(ls)" https://demo.storj-ipfs.com/api/v0/add)"
-          fi
+          json="$(curl -s -x http://localhost:8118 -X POST -F file=@"$(ls)" https://demo.storj-ipfs.com/api/v0/add)" && \
           name="$(jq -r .Name <<<"${json}")" && \
           hash="$(jq -r .Hash <<<"${json}")" && \
           size="$(jq -r .Size <<<"${json}")"
@@ -109,7 +92,7 @@ jobs:
         shell: bash
         run: |
           cd download && \
-          type="$(file "${{ steps.anonfiles.outputs.name }}"|awk -F : '{sub(/^ /,"",$2);print $2}')" && \
+          type="$(file "${{ steps.anonfiles.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')" && \
           link="$(node -e "console.log(encodeURI('https://ipfs.io/ipfs/${{ steps.anonfiles.outputs.hash }}'))")" && \
           curl -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \

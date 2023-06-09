@@ -33,7 +33,7 @@ jobs:
         id: link_status
         shell: bash
         run: |
-          if [[ ${{ toJSON(github.event.client_payload.link) }} =~ ^http.*$ ]]; then
+          if [[ ${{ toJSON(github.event.client_payload.link) }} =~ ^http.*$ && ! ${{ toJSON(github.event.client_payload.link) }} =~ \.onion ]]; then
             status="$(curl -siL ${{ toJSON(github.event.client_payload.link) }} -o /dev/null -w '%{http_code}\n')"
             if [[ "${status}" != "200" ]]; then
               status="notfound" && \
@@ -46,20 +46,38 @@ jobs:
         timeout-minutes: 300
         shell: bash
         run: |
-          cd download && \
-          docker run --rm -i \
-            -p 6988:6988 \
-            -p 6982:6982/udp \
-            -v $(pwd):/download \
-            redpeacock78/downloaderaction:latest \
-            -s20 -j20 -x16 -k20M \
-            --seed-time=0 \
-            --max-tries=0 \
-            --retry-wait=10 \
-            --summary-interval=0 \
-            --download-result=hide \
-            --console-log-level=error \
-            ${{ toJSON(github.event.client_payload.link) }}
+          cd download
+          if [[ ${{ toJSON(github.event.client_payload.link) }} =~ \.onion ]]; then
+            docker run -it -p 8118:8118 -d dperson/torproxy
+            docker run --rm -i \
+              -p 6988:6988 \
+              -p 6982:6982/udp \
+              -v $(pwd):/download \
+              redpeacock78/downloaderaction:latest \
+              -s20 -j20 -x16 -k20M \
+              --http-proxy=localhost:8118 \
+              --seed-time=0 \
+              --max-tries=0 \
+              --retry-wait=10 \
+              --summary-interval=0 \
+              --download-result=hide \
+              --console-log-level=error \
+              ${{ toJSON(github.event.client_payload.link) }}
+          else
+            docker run --rm -i \
+              -p 6988:6988 \
+              -p 6982:6982/udp \
+              -v $(pwd):/download \
+              redpeacock78/downloaderaction:latest \
+              -s20 -j20 -x16 -k20M \
+              --seed-time=0 \
+              --max-tries=0 \
+              --retry-wait=10 \
+              --summary-interval=0 \
+              --download-result=hide \
+              --console-log-level=error \
+              ${{ toJSON(github.event.client_payload.link) }}
+          fi
       - name: Upload files to ipfs
         if: ${{ success() }}
         id: anonfiles

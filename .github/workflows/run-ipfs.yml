@@ -48,15 +48,16 @@ jobs:
         run: |
           cd download
           if [[ ${{ toJSON(github.event.client_payload.link) }} =~ \.onion ]]; then
-            docker run -it -p 8118:8118 -d dockage/tor-privoxy:latest
+            docker run -it --name tor-proxy -p 8118:8118 -d dockage/tor-privoxy:latest
             sleep 20 && \
             docker run --rm -i \
               -p 6988:6988 \
               -p 6982:6982/udp \
               -v $(pwd):/download \
+              --link tor-proxy:tor \
               redpeacock78/downloaderaction:latest \
               -s20 -j20 -x16 -k20M \
-              --http-proxy="http://localhost:8118" \
+              --http-proxy="http://tor:8118" \
               --seed-time=0 \
               --max-tries=0 \
               --retry-wait=10 \

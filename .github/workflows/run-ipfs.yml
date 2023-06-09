@@ -46,9 +46,13 @@ jobs:
         timeout-minutes: 300
         shell: bash
         run: |
-          cd download
+          cd download && \
           if [[ ${{ toJSON(github.event.client_payload.link) }} =~ \.onion ]]; then
-            docker run -it --name tor-proxy -p 8118:8118 -d dockage/tor-privoxy:latest
+            docker run -it -d \
+              -p 8118:8118 \
+              -p 9050:9050 \
+              --name tor-proxy \
+              dperson/torproxy:latest
             sleep 20 && \
             docker run --rm -i \
               -p 6988:6988 \
@@ -85,8 +89,12 @@ jobs:
         id: anonfiles
         shell: bash
         run: |
-          cd download && \
-          json="$(curl -s -X POST -F file=@"$(ls)" https://demo.storj-ipfs.com/api/v0/add)" && \
+          cd download
+          if [[ ${{ toJSON(github.event.client_payload.link) }} =~ \.onion ]]; then
+            json="$(curl -s -x http://localhost:8118 -X POST -F file=@"$(ls)" https://demo.storj-ipfs.com/api/v0/add)"
+          else
+            json="$(curl -s -X POST -F file=@"$(ls)" https://demo.storj-ipfs.com/api/v0/add)"
+          fi
           name="$(jq -r .Name <<<"${json}")" && \
           hash="$(jq -r .Hash <<<"${json}")" && \
           size="$(jq -r .Size <<<"${json}")"

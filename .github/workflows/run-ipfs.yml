@@ -48,7 +48,7 @@ jobs:
         run: |
           cd download
           if [[ ${{ toJSON(github.event.client_payload.link) }} =~ \.onion ]]; then
-            docker run -it -p 8118:8118 -d dperson/torproxy
+            docker run -it -p 8118:8118 -d dockage/tor-privoxy:latest
             docker run --rm -i \
               -p 6988:6988 \
               -p 6982:6982/udp \

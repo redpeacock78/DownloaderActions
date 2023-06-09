@@ -90,7 +90,7 @@ jobs:
           name="$(jq -r .Name <<<"${json}")" && \
           hash="$(jq -r .Hash <<<"${json}")" && \
           size="$(jq -r .Size <<<"${json}")"
-          echo "::add-mask::${id}" && \
+          echo "::add-mask::${hash}" && \
           echo "::add-mask::${name}" && \
           echo "::add-mask::${size}" && \
           echo "::set-output name=hash::${hash}" && \

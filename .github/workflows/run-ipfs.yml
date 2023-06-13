@@ -73,7 +73,7 @@ jobs:
         shell: bash
         run: |
           cd download && \
-          json="$(curl -s -x http://localhost:8118 -X POST -F file=@"$(ls)" https://demo.storj-ipfs.com/api/v0/add)" && \
+          json="$(curl -s -x http://localhost:8118 -X POST -F file=@"$(ls)" ${{ secrets.IPFS_API }})" && \
           name="$(jq -r .Name <<<"${json}")" && \
           hash="$(jq -r .Hash <<<"${json}")" && \
           size="$(jq -r .Size <<<"${json}")"
@@ -92,14 +92,14 @@ jobs:
             --retry 100 \
             --retry-all-errors \
             --output /dev/null \
-            "https://cloudflare-ipfs.com/ipfs/${{ steps.anonfiles.outputs.hash }}"
+            "${{ secrets.IPFS_GATEWAY }}${{ steps.anonfiles.outputs.hash }}"
       - name: All succeeded
         if: ${{ success() }}
         shell: bash
         run: |
           cd download && \
           type="$(file "${{ steps.anonfiles.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')" && \
-          link="https://cloudflare-ipfs.com/ipfs/${{ steps.anonfiles.outputs.hash }}" && \
+          link="${{ secrets.IPFS_GATEWAY }}${{ steps.anonfiles.outputs.hash }}" && \
           curl -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \

@@ -59,7 +59,7 @@ jobs:
             --link tor-proxy:tor \
             redpeacock78/downloaderaction:latest \
             -s20 -j20 -x16 -k20M \
-            --http-proxy="http://tor:8118" \
+            --all-proxy="http://tor:8118" \
             --seed-time=0 \
             --max-tries=0 \
             --retry-wait=10 \

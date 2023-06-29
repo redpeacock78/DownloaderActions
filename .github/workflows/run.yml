@@ -79,7 +79,6 @@ jobs:
         timeout-minutes: 300
         shell: bash
         run: |
-          port=$(echo {6881..6999} | tr ' ' \\n | shuf -n1)
           cd download && \
           docker run --rm -i \
             -p ${{ steps.use_port.outputs.number }}:${{ steps.use_port.outputs.number }} \

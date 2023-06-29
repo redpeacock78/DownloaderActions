@@ -80,17 +80,19 @@ jobs:
         shell: bash
         run: |
           cd download && \
+          port=${{ steps.use_port.outputs.number }} && \
+          dht_path=${{ steps.make_dht.outputs.dht_path }} && \
           docker run --rm -i \
-            -p ${{ steps.use_port.outputs.number }}:${{ steps.use_port.outputs.number }} \
-            -p ${{ steps.use_port.outputs.number }}:${{ steps.use_port.outputs.number }}/udp \
+            -p ${port}:${port} \
+            -p ${port}:${port}/udp \
             -v $(pwd):/download \
-            -v ${{ steps.make_dht.outputs.dht_path }}:/root/.cache/aria2 \
+            -v ${dht_path}:/root/.cache/aria2 \
             --link tor-proxy:tor \
             redpeacock78/downloaderaction:latest \
             -s20 -j20 -x16 -k20M \
             --all-proxy="http://tor:8118" \
-            --listen-port=${{ steps.use_port.outputs.number }} \
-            --dht-listen-port=${{ steps.use_port.outputs.number }} \
+            --listen-port=${port} \
+            --dht-listen-port=${port} \
             --disable-ipv6=true \
             --continue=true \
             --seed-time=0 \

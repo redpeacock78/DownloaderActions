@@ -51,15 +51,18 @@ jobs:
         timeout-minutes: 300
         shell: bash
         run: |
+          port=$(echo {6881..6999} | tr ' ' \\n | shuf -n1)
           cd download && \
           docker run --rm -i \
-            -p 6988:6988 \
-            -p 6982:6982/udp \
+            -p ${port}:${port} \
+            -p ${port}:${port}/udp \
             -v $(pwd):/download \
             --link tor-proxy:tor \
             redpeacock78/downloaderaction:latest \
             -s20 -j20 -x16 -k20M \
             --all-proxy="http://tor:8118" \
+            --listen-port=${port} \
+            --dht-listen-port=${port} \
             --seed-time=0 \
             --max-tries=0 \
             --retry-wait=10 \

@@ -50,9 +50,9 @@ jobs:
               exit 2
             fi
           fi
-      - name: Start Docker
+      - name: Make dht.dat
         if: ${{ success() }}
-        timeout-minutes: 300
+        id: make_dht
         shell: bash
         run: |
           hex=""
@@ -66,21 +66,32 @@ jobs:
           hex+="00 00 00 00"
           hex+="00 00 00 00"
           hex+="00 00 00 00"
-          echo $hex | xxd -r -p > dht.dat
-          dht_path=$(pwd)
+          echo ${hex} | xxd -r -p > dht.dat && \
+          echo "dht_path=$(pwd)" >> "$GITHUB_OUTPUT"
+      - name: Datermine the port numer to use
+        if: ${{ success() }}
+        id: use_port
+        shell: bash
+        run: |
+          echo "number=$(echo {1024..65535} | tr ' ' \\n | shuf -n1)" >> "$GITHUB_OUTPUT"
+      - name: Start Docker
+        if: ${{ success() }}
+        timeout-minutes: 300
+        shell: bash
+        run: |
           port=$(echo {6881..6999} | tr ' ' \\n | shuf -n1)
           cd download && \
           docker run --rm -i \
-            -p ${port}:${port} \
-            -p ${port}:${port}/udp \
+            -p ${{ steps.use_port.outputs.number }}:${{ steps.use_port.outputs.number }} \
+            -p ${{ steps.use_port.outputs.number }}:${{ steps.use_port.outputs.number }}/udp \
             -v $(pwd):/download \
-            -v ${dht_path}:/root/.cache/aria2 \
+            -v ${{ steps.make_dht.outputs.dht_path }}:/root/.cache/aria2 \
             --link tor-proxy:tor \
             redpeacock78/downloaderaction:latest \
             -s20 -j20 -x16 -k20M \
             --all-proxy="http://tor:8118" \
-            --listen-port=${port} \
-            --dht-listen-port=${port} \
+            --listen-port=${{ steps.use_port.outputs.number }} \
+            --dht-listen-port=${{ steps.use_port.outputs.number }} \
             --disable-ipv6=true \
             --continue=true \
             --seed-time=0 \

@@ -137,7 +137,11 @@ jobs:
           if (( "$(wc -c < "${file}")" <= 26214400 )); then
             name="${file}"
             type="$(file "${file}"|awk -F : '{sub(/^ /,"",$2);print $2}')"
-            link="${{ steps.anonfiles.outputs.id }}"
+            cdn_id="$(awk -F '/' '{print $5}' <<<"${{ steps.anonfiles.outputs.id }}")"
+            id="$(awk -F '/' '{print $6}' <<<"${{ steps.anonfiles.outputs.id }}")"
+            default_name="$(awk -F '/' '{print $7}' <<<"${{ steps.anonfiles.outputs.id }}")"
+            file_name="$(node -e "console.log(encodeURI('${name}'))")"
+            link="${{ secrets.PROXY_URL }}${cdn_id}/${id}/${default_name}?file=${file_name}"
           else
             name="${{ steps.anonfiles.outputs.name }}"
             type="$(file "${{ steps.anonfiles.outputs.name }}"|awk -F : '{sub(/^ /,"",$2);print $2}')"

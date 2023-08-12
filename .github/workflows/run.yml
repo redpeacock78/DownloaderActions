@@ -133,10 +133,12 @@ jobs:
         shell: bash
         run: |
           cd download && \
-          type="$(file "${{ steps.anonfiles.outputs.name }}"|awk -F : '{sub(/^ /,"",$2);print $2}')"
-          if (( "$(wc -c < "${{ steps.anonfiles.outputs.name }}")" <= 26214400 )); then
+          file="$(ls)"
+          if (( "$(wc -c < "${file}")" <= 26214400 )); then
+            type="$(file "${file}"|awk -F : '{sub(/^ /,"",$2);print $2}')"
             link=${{ steps.anonfiles.outputs.id }}
           else
+            type="$(file "${{ steps.anonfiles.outputs.name }}"|awk -F : '{sub(/^ /,"",$2);print $2}')"
             link="$(node -e "console.log(encodeURI('https://anonfiles-api.vercel.app/${{ steps.anonfiles.outputs.id }}/${{ steps.anonfiles.outputs.name }}'))")"
           fi
           curl -s -X POST \

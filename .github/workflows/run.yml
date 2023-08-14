@@ -136,7 +136,7 @@ jobs:
           file="$(ls)"
           if (( "$(wc -c < "${file}")" <= 26214400 )); then
             name="${file}"
-            type="$(file -I "${file}" | awk -F : '{sub(/^ /,"",$2);print $2}')"
+            type="$(file --mime-type "${file}" | awk -F : '{sub(/^ /,"",$2);print $2}')"
             cdn_id="$(awk -F '/' '{print $5}' <<<"${{ steps.anonfiles.outputs.id }}")"
             id="$(awk -F '/' '{print $6}' <<<"${{ steps.anonfiles.outputs.id }}")"
             default_name="$(awk -F '/' '{print $7}' <<<"${{ steps.anonfiles.outputs.id }}")"
@@ -144,7 +144,7 @@ jobs:
             link="${{ secrets.PROXY_URL }}${cdn_id}/${id}/${default_name}?file=${file_name}"
           else
             name="${{ steps.anonfiles.outputs.name }}"
-            type="$(file -I "${{ steps.anonfiles.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')"
+            type="$(file --mime-type "${{ steps.anonfiles.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')"
             link="https://anonfiles-api.vercel.app/$(node -e "console.log(encodeURIComponent('${{ steps.anonfiles.outputs.id }}'))")/$(node -e "console.log(encodeURIComponent('${{ steps.anonfiles.outputs.name }}'))")"
           fi
           curl -s -X POST \

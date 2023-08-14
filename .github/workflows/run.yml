@@ -141,7 +141,11 @@ jobs:
             id="$(awk -F '/' '{print $6}' <<<"${{ steps.anonfiles.outputs.id }}")"
             default_name="$(awk -F '/' '{print $7}' <<<"${{ steps.anonfiles.outputs.id }}")"
             file_name="$(node -e "console.log(encodeURIComponent('${name}'))")"
-            link="${{ secrets.PROXY_URL }}${cdn_id}/${id}/${default_name}?file=${file_name}"
+            if [[ "${type}" =~ ^video.*$ ]] || [[ "${type}" =~ ^audio.*$ ]]; then
+              link="${{ secrets.PROXY_URL }}${cdn_id}/${id}/${default_name}"
+            else
+              link="${{ secrets.PROXY_URL }}${cdn_id}/${id}/${default_name}?file=${file_name}"
+            fi
           else
             name="${{ steps.anonfiles.outputs.name }}"
             type="$(file --mime-type "${{ steps.anonfiles.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')"

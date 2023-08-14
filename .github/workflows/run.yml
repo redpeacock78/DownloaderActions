@@ -73,7 +73,7 @@ jobs:
         id: use_port
         shell: bash
         run: |
-          echo "number=$(echo {1024..65535} | tr ' ' \\n | shuf -n1)" >> "$GITHUB_OUTPUT"
+          echo "number=$(echo {1024..65535} | tr ' ' \\n | sed '/^8118$/d;/^9050$/d' | shuf -n1)" >> "$GITHUB_OUTPUT"
       - name: Start Docker
         if: ${{ success() }}
         timeout-minutes: 300

@@ -147,6 +147,7 @@ jobs:
             type="$(file --mime-type "${{ steps.anonfiles.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')"
             link="https://anonfiles-api.vercel.app/$(node -e "console.log(encodeURIComponent('${{ steps.anonfiles.outputs.id }}'))")/$(node -e "console.log(encodeURIComponent('${{ steps.anonfiles.outputs.name }}'))")"
           fi
+          short_link="${{ secrets.SHORTER_API }}/$(curl -s -X POST -x http://localhost:8118 ${{ secrets.SHORTER_API }}/api/v0/shorter -d "{\"url\": \"${link}\"}" | jq -r .key)
           curl -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \
@@ -159,7 +160,7 @@ jobs:
             "title": "${name}",
             "size": "${{ steps.anonfiles.outputs.size }}",
             "type": "${type}",
-            "link": "${link}",
+            "link": "${short_link}",
             "origin_link": ${{ toJSON(github.event.client_payload.link) }}
           }
           EOF

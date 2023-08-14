@@ -146,7 +146,7 @@ jobs:
             else
               proxy_link="${{ secrets.PROXY_URL }}${cdn_id}/${id}/${default_name}?file=${file_name}"
             fi
-            short_link="$(curl -s -X POST -x http://localhost:8118 ${{ secrets.SHORTER_API }}/api/v0/shorter -d "{\"url\": \"${proxy_link}\"}" | jq -r .key)"
+            short_link="$(curl -s -X POST ${{ secrets.SHORTER_API }}/api/v0/shorter -d "{\"url\": \"${proxy_link}\"}" | jq -r .key)"
             link="${{ secrets.SHORTER_API }}/${short_link}"
           else
             name="${{ steps.anonfiles.outputs.name }}"

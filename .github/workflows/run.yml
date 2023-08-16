@@ -144,11 +144,7 @@ jobs:
             id="$(awk -F '/' '{print $6}' <<<"${{ steps.anonfiles.outputs.id }}")"
             default_name="$(awk -F '/' '{print $7}' <<<"${{ steps.anonfiles.outputs.id }}")"
             file_name="$(node -e "console.log(encodeURIComponent('${name}'))")"
-            if [[ "${type}" =~ ^video.*$ ]] || [[ "${type}" =~ ^audio.*$ ]]; then
-              proxy_link="${{ secrets.PROXY_URL }}${cdn_id}/${id}/${default_name}"
-            else
-              proxy_link="${{ secrets.PROXY_URL }}${cdn_id}/${id}/${default_name}?file=${file_name}"
-            fi
+            proxy_link="${{ secrets.PROXY_URL }}${cdn_id}/${id}/${default_name}?file=${file_name}"
             short_link="$(curl -s -X POST ${{ secrets.SHORTER_API }}/api/v0/shorter -d "{\"url\": \"${proxy_link}\"}" | jq -r .key)"
             link="${{ secrets.SHORTER_API }}/${short_link}"
           else

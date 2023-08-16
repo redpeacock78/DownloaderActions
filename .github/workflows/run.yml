@@ -103,7 +103,7 @@ jobs:
             --console-log-level=error \
             ${{ toJSON(github.event.client_payload.link) }} && \
           file="$(ls)" && \
-          new_name="$(printf "$(sed 's#^file://##;s/+/ /g;s/%\(..\)/\\x\1/g;' <<<"${file}")\n")" && \
+          new_name="$(printf "$(sed 's/%\(..\)/\\x\1/g;' <<<"${file}")\n")" && \
           mv "${file}" "${new_name}"
       - name: Upload files to anonfiles
         if: ${{ success() }}

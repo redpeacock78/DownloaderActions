@@ -104,7 +104,9 @@ jobs:
             ${{ toJSON(github.event.client_payload.link) }} && \
           file="$(ls)" && \
           new_name="$(printf "$(sed 's/%\(..\)/\\x\1/g;' <<<"${file}")\n")" && \
-          mv "${file}" "${new_name}"
+          if [[ "${file}" != "${new_name}" ]]; then
+            mv "${file}" "${new_name}"
+          fi
       - name: Upload files to anonfiles
         if: ${{ success() }}
         id: anonfiles

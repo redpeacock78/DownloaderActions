@@ -52,7 +52,7 @@ jobs:
         timeout-minutes: 300
         shell: bash
         run: |
-          echo ${{ secrets.TWITTER_COOKIES }} >> cookie.txt && \
+          echo "${{ secrets.TWITTER_COOKIES }}" >> cookie.txt && \
           cd download && \
           yt-dlp --quiet --cookie ~/cookie.txt ${{ toJSON(github.event.client_payload.link) }}
       - name: Upload files

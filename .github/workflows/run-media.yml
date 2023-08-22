@@ -54,7 +54,7 @@ jobs:
         run: |
           echo "${{ secrets.TWITTER_COOKIES }}" >> cookie.txt && \
           cd download && \
-          yt-dlp --quiet --cookie ~/cookie.txt ${{ toJSON(github.event.client_payload.link) }}
+          yt-dlp --quiet --cookies ~/cookie.txt ${{ toJSON(github.event.client_payload.link) }}
       - name: Upload files
         if: ${{ success() }}
         id: upload

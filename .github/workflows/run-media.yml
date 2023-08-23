@@ -69,8 +69,8 @@ jobs:
             -H 'Content-Type: multipart/form-data' \
             -F channel=${{ toJSON(github.event.client_payload.channel) }} \
             -F message=${{ toJSON(github.event.client_payload.message) }} \
-            -F type="$(file --mime-type "${file}" | awk -F : '{sub(/^ /,"",$2);print $2}')" \
             -F name="${file}" \
+            -F type="$(file --mime-type "${file}" | awk -F : '{sub(/^ /,"",$2);print $2}')" \
             -F "file=@${file}"
           else
             curl -s -X POST \

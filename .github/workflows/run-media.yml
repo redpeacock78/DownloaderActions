@@ -67,10 +67,10 @@ jobs:
             curl -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \
             -H 'Content-Type: multipart/form-data' \
-            -F channel=${{ toJSON(github.event.client_payload.channel) }} \
-            -F message=${{ toJSON(github.event.client_payload.message) }} \
-            -F name="${file}" \
-            -F type="$(file --mime-type "${file}" | awk -F : '{sub(/^ /,"",$2);print $2}')" \
+            -F "channel=${{ toJSON(github.event.client_payload.channel) }}" \
+            -F "message=${{ toJSON(github.event.client_payload.message) }}" \
+            -F "name=${file}" \
+            -F "type=$(file --mime-type "${file}" | awk -F : '{sub(/^ /,"",$2);print $2}')" \
             -F "file=@${file}"
           else
             curl -s -X POST \

@@ -62,7 +62,8 @@ jobs:
         shell: bash
         run: |
           cd download && \
-          for file_name in "$(ls .)"; do
+          IFS=$'\n' && \
+          for file_name in $(ls); do
             if (( "$(wc -c < "${file_name}")" <= 26214400 )); then
               post_urls=("${{ secrets.C1_URL }}" "${{ secrets.C2_URL }}" "${{ secrets.C3_URL }}")
               post_url="${post_urls[$(($RANDOM % ${#post_urls[*]}))]}"

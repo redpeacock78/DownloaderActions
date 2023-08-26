@@ -69,10 +69,10 @@ jobs:
               json="$(curl -s -X POST -H 'Content-Type: multipart/form-data' -F "file=@${file_name}" "${post_url}")" && \
               link="$(jq -r .attachments[0].url <<<"${json}")" && \
               curl -s -X POST \
-            ${{ secrets.ENDPOINT_URL }} \
-            -H "Accept: application/json" \
-            -H "Content-type: application/json" \
-            -d @- <<EOF
+              ${{ secrets.ENDPOINT_URL }} \
+              -H "Accept: application/json" \
+              -H "Content-type: application/json" \
+              -d @- <<EOF
           {
             "status": "media",
             "channel": ${{ toJSON(github.event.client_payload.channel) }},

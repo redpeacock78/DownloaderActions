@@ -78,7 +78,7 @@ jobs:
             "status": "media",
             "channel": ${{ toJSON(github.event.client_payload.channel) }},
             "message": ${{ toJSON(github.event.client_payload.message) }},
-            "link": "${link}",
+            "link": "${link}"
           }
           EOF
             else

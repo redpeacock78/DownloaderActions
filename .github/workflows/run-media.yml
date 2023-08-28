@@ -10,7 +10,7 @@ jobs:
     name: Run
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -41,11 +41,14 @@ jobs:
               exit 2
             fi
           fi
+      - name: Setup Ffmpeg
+        uses: FedericoCarboni/setup-ffmpeg@v2
+        if: ${{ success() }}
       - name: Install yt-dlp
         if: ${{ success() }}
         shell: bash
         run: |
-          sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
+          sudo curl -sL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
           sudo chmod a+rx /usr/local/bin/yt-dlp
       - name: Start Download
         if: ${{ success() }}
@@ -55,14 +58,38 @@ jobs:
           cookie_path=$(pwd) && \
           echo "${{ secrets.TWITTER_COOKIES }}" >> cookie.txt && \
           cd download && \
-          yt-dlp --quiet --cookies ${cookie_path}/cookie.txt ${{ toJSON(github.event.client_payload.link) }} 2>/dev/null || \
-          yt-dlp --quiet --cookies ${cookie_path}/cookie.txt -o "%(title).200s.%(ext)s" ${{ toJSON(github.event.client_payload.link) }} 2>/dev/null || \
-           yt-dlp --quiet --cookies ${cookie_path}/cookie.txt -o "%(id)s.%(ext)s" ${{ toJSON(github.event.client_payload.link) }}
+          yt-dlp --quiet \
+            --cookies ${cookie_path}/cookie.txt \
+            ${{ toJSON(github.event.client_payload.link) }} 2>/dev/null || \
+          yt-dlp --quiet \
+            --cookies ${cookie_path}/cookie.txt \
+            -o "%(title).200s.%(ext)s" \
+            ${{ toJSON(github.event.client_payload.link) }} 2>/dev/null || \
+          yt-dlp --quiet \
+            --cookies ${cookie_path}/cookie.txt \
+            -o "%(id)s.%(ext)s" \
+            ${{ toJSON(github.event.client_payload.link) }}
+      - name: Check and Convert Files
+        if: ${{ success() }}
+        shell: bash
+        run: |
+          dir=$(pwd) && \
+          cd download && \
+          IFS=$'\n' && \
+          for file_name in $(ls); do
+            if (( "$(wc -c < "${file_name}")" <= 26214400 )); then
+              :
+            else
+              mkdir -p "${dir}/conv" && \
+              ffmpeg -i "${file_name}" -fs 25MB -o "${dir}/conv/${file_name}"
+            fi
+          done
       - name: Upload files
         if: ${{ success() }}
         id: upload
         shell: bash
         run: |
+          dir=$(pwd) && \
           cd download && \
           IFS=$'\n' && \
           for file_name in $(ls); do
@@ -72,10 +99,10 @@ jobs:
               json="$(curl -s -X POST -H 'Content-Type: multipart/form-data' -F "file=@${file_name}" "${post_url}")" && \
               link="$(jq -r .attachments[0].url <<<"${json}")" && \
               curl -s -X POST \
-              ${{ secrets.ENDPOINT_URL }} \
-              -H "Accept: application/json" \
-              -H "Content-type: application/json" \
-              -d @- <<EOF
+                ${{ secrets.ENDPOINT_URL }} \
+                -H "Accept: application/json" \
+                -H "Content-type: application/json" \
+                -d @- <<EOF
           {
             "status": "media",
             "channel": ${{ toJSON(github.event.client_payload.channel) }},
@@ -84,17 +111,20 @@ jobs:
           }
           EOF
             else
+              post_urls=("${{ secrets.C1_URL }}" "${{ secrets.C2_URL }}" "${{ secrets.C3_URL }}")
+              post_url="${post_urls[$(($RANDOM % ${#post_urls[*]}))]}"
+              json="$(curl -s -X POST -H 'Content-Type: multipart/form-data' -F "file=@${dir}/conv/${file_name}" "${post_url}")" && \
+              link="$(jq -r .attachments[0].url <<<"${json}")" && \
               curl -s -X POST \
-              ${{ secrets.ENDPOINT_URL }} \
-              -H "Accept: application/json" \
-              -H "Content-type: application/json" \
-              -d @- <<EOF
+                ${{ secrets.ENDPOINT_URL }} \
+                -H "Accept: application/json" \
+                -H "Content-type: application/json" \
+                -d @- <<EOF
           {
-            "status": "failure",
+            "status": "media",
             "channel": ${{ toJSON(github.event.client_payload.channel) }},
             "message": ${{ toJSON(github.event.client_payload.message) }},
-            "link": ${{ toJSON(github.event.client_payload.link) }},
-            "content": "Sorry! It seems the file was larger than 25MB."
+            "link": "${link}"
           }
           EOF
             fi

@@ -81,7 +81,7 @@ jobs:
               :
             else
               mkdir -p "${dir}/conv" && \
-              ffmpeg -i "${file_name}" -fs 25MB "${dir}/conv/${file_name}"
+              ffmpeg -i "${file_name}" -vcodec libx265 -crf 18 -fs 25MB "${dir}/conv/${file_name}"
             fi
           done
       - name: Upload files

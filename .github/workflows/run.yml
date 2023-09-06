@@ -44,7 +44,7 @@ jobs:
         run: |
           if [[ ${{ toJSON(github.event.client_payload.link) }} =~ ^http.*$ ]]; then
             status="$(curl -siL -x http://localhost:8118 ${{ toJSON(github.event.client_payload.link) }} -o /dev/null -w '%{http_code}\n')"
-            if [[ "${status}" != "200" ]]; then
+            if [[ "${status}" != "200" && "${status}" != "302" && "${status}" != "307" ]]; then
               status="notfound" && \
               echo "status=${status}" >> "$GITHUB_OUTPUT" && \
               exit 2
@@ -122,7 +122,7 @@ jobs:
             name="$(jq -r .attachments[0].filename <<<"${json}")" && \
             size="$(jq -r .attachments[0].size <<<"${json}")"
           else
-            json="$(curl -s -x http://localhost:8118 -F "file=@${file}" https://api.anonfiles.com/upload)" && \
+            json="$(curl -s -x http://localhost:8118 -F "file=@${file}" https://anonfile.com/api/v1/upload)" && \
             id="$(jq -r .data.file.metadata.id <<<"${json}")" && \
             name="$(jq -r .data.file.metadata.name <<<"${json}")" && \
             size="$(jq -r .data.file.metadata.size.readable <<<"${json}")"

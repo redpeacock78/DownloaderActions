@@ -114,8 +114,8 @@ jobs:
             if (( "$(wc -c < "${file}")" <= 26214400 )); then
               :
             else
-              ffmpeg -i "${file_name}" -c:a copy -r 30 -vcodec libx265 -fs 25MB "${file_name%.*}_out.mp4" && \
-              rm -rf "${file_name}"
+              ffmpeg -i "${file}" -c:a copy -r 30 -vcodec libx265 -fs 25MB "${file%.*}_out.mp4" && \
+              rm -rf "${file}"
             fi
           fi
       - name: Upload files to anonfiles

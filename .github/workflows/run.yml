@@ -113,7 +113,7 @@ jobs:
             if (( "$(wc -c < "${new_name}")" <= 26214400 )); then
               :
             else
-              ffmpeg -i "${new_name}" -c:a copy -r 30 -vcodec libx265 -fs 25MB "${new_name%.*}_out.mp4" && \
+              ffmpeg -i "${new_name}" -c:v libvpx -crf 10 -b:v 1M -c:a libvorbis -fs 25MB "${new_name%.*}.webm" && \
               rm -rf "${new_name}"
             fi
           fi

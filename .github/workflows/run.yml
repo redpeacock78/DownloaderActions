@@ -107,6 +107,7 @@ jobs:
       - name: Adjust file name
         if: ${{ success() }}
         run: |
+          cd download && \
           file="$(ls)" && \
           new_name="$(printf "$(sed 's/%\(..\)/\\x\1/g;' <<<"${file}")\n")" && \
           if [[ "${file}" != "${new_name}" ]]; then
@@ -115,12 +116,14 @@ jobs:
       - name: Adjust Audio/Video file size
         if: ${{ success() }}
         run: |
-          if [[ "$(file --mime-type "${new_name}" | awk -F : '{sub(/^ /,"",$2);print $2}')" =~ "video/" ]]; then
-            if (( "$(wc -c < "${new_name}")" <= 26214400 )); then
+          cd download && \
+          file="$(ls)" && \
+          if [[ "$(file --mime-type "${file}" | awk -F : '{sub(/^ /,"",$2);print $2}')" =~ "video/" ]]; then
+            if (( "$(wc -c < "${file}")" <= 26214400 )); then
               :
             else
-              ffmpeg -i "${new_name}" -fs 25MB -loglevel error "${new_name%.*}_cps.webm" && \
-              rm -rf "${new_name}"
+              ffmpeg -i "${file}" -fs 25MB -loglevel error "${file%.*}_cps.webm" && \
+              rm -rf "${file}"
             fi
           fi
       - name: Upload files to anonfiles

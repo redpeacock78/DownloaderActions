@@ -113,7 +113,7 @@ jobs:
             if (( "$(wc -c < "${new_name}")" <= 26214400 )); then
               :
             else
-              ffmpeg -i "${new_name}" -fs 25MB -loglevel error "${new_name%.*}.webm" && \
+              ffmpeg -i "${new_name}" -fs 25MB -loglevel error "${new_name%.*}_cps.webm" && \
               rm -rf "${new_name}"
             fi
           fi

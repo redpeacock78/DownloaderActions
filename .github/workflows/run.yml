@@ -103,12 +103,18 @@ jobs:
             --summary-interval=0 \
             --download-result=hide \
             --console-log-level=error \
-            ${{ toJSON(github.event.client_payload.link) }} && \
+            ${{ toJSON(github.event.client_payload.link) }}
+      - name: Adjust file name
+        if: ${{ success() }}
+        run: |
           file="$(ls)" && \
           new_name="$(printf "$(sed 's/%\(..\)/\\x\1/g;' <<<"${file}")\n")" && \
           if [[ "${file}" != "${new_name}" ]]; then
             mv "${file}" "${new_name}"
           fi
+      - name: Adjust Audio/Video file size
+        if: ${{ success() }}
+        run: |
           if [[ "$(file --mime-type "${new_name}" | awk -F : '{sub(/^ /,"",$2);print $2}')" =~ "video/" ]]; then
             if (( "$(wc -c < "${new_name}")" <= 26214400 )); then
               :

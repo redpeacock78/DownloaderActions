@@ -20,6 +20,9 @@ jobs:
         run: mkdir -p download
       - name: Setup ffmpeg
         uses: FedericoCarboni/setup-ffmpeg@v2
+      - name: Setup nkf
+        run: |
+          type nkf > /dev/null 2>&1 || sudo apt-get install -y nkf
       - name: Masking Secrets
         shell: bash
         run: |
@@ -109,7 +112,7 @@ jobs:
         run: |
           cd download && \
           file="$(ls)" && \
-          new_name="$(printf "$(sed 's/%\(..\)/\\x\1/g;' <<<"${file}")\n")" && \
+          new_name="$(echo "${file}" | nkf -w --url-input)" && \
           if [[ "${file}" != "${new_name}" ]]; then
             mv "${file}" "${new_name}"
           fi

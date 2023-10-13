@@ -58,7 +58,7 @@ jobs:
           cookie_path=$(pwd) && \
           echo "${{ secrets.TWITTER_COOKIES }}" >> cookie.txt && \
           cd download && \
-            --cookies ${cookie_path}/cookie.txt \
+          yt-dlp --cookies ${cookie_path}/cookie.txt \
             -o "%(id)s_%(autonumber)_%(video_autonumber).%(ext)s" \
             ${{ toJSON(github.event.client_payload.link) }}
       - name: Check and Convert Files

@@ -120,7 +120,7 @@ jobs:
           }
           EOF
             fi
-            sleep 1
+            sleep 5
           done
       - name: Download file not found
         if: >-

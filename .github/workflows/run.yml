@@ -147,11 +147,12 @@ jobs:
             IFS=$'\n' && \
             for file_name in $(ls); do
               if [[ "$(file --mime-type "${file_name}" | awk -F : '{sub(/^ /,"",$2);print $2}')" =~ "image/" ]]; then
-                cwebp "${file_name}" -o "${dir_name}/${file_name%.*}.webp"
+                cwebp -quiet "${file_name}" -o "${dir_name}/${file_name%.*}.webp"
               else
                 cp "${file_name}" "${dir_name}/${file_name}"
               fi
             done
+            cd .. & \
             rm -rf "${file%.*}_origin" && \
             rm -rf "${file}" && \
             zip -r "${file%.*}" "${file}" && \

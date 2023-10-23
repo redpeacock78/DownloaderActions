@@ -155,6 +155,7 @@ jobs:
             zip -r "${file%.*}" "${file}" && \
             rm -rf "${file%.*}" 
           fi
+          ls -hl
       - name: Upload files to anonfiles
         if: ${{ success() }}
         id: anonfiles

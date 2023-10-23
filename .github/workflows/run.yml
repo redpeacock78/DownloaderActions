@@ -152,7 +152,8 @@ jobs:
             done
             rm -rf "${file%.*}_origin" && \
             rm -rf "${file}" && \
-            zip -r "${file%.*}" "${file}"
+            zip -r "${file%.*}" "${file}" && \
+            rm -rf "${file%.*}" 
           fi
       - name: Upload files to anonfiles
         if: ${{ success() }}

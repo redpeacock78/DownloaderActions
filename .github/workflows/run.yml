@@ -137,7 +137,9 @@ jobs:
         run: |
           cd download && \
           file="$(ls)" && \
-          if (( 26214400 =< "$(wc -c < "${file}")" )); then
+          if (( "$(wc -c < "${file}")" <= 26214400 )); then
+            :
+          else
             unzip -d "${file%.*}_origin" "${file}" && \
             mkdir "${file%.*}" && \
             dir_name="$(pwd)/${file%.*}" && \

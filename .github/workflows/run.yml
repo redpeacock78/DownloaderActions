@@ -140,7 +140,7 @@ jobs:
           if (( "$(wc -c < "${file}")" <= 26214400 )); then
             :
           else
-            unzip -d "${file%.*}_origin" "${file}" && \
+            unzip -q -d "${file%.*}_origin" "${file}" && \
             mkdir "${file%.*}" && \
             dir_name="$(pwd)/${file%.*}" && \
             cd "${file%.*}_origin" && \
@@ -153,11 +153,11 @@ jobs:
               fi
             done
             cd .. & \
-            ls && \
             rm -rf "${file%.*}_origin" && \
             rm -rf "${file}" && \
-            zip -r "${file%.*}" . && \
-            rm -rf "${file%.*}" 
+            zip -q -r "${file%.*}" . && \
+            rm -rf "${file%.*}" && \
+            ls -lh
           fi
       - name: Upload files to anonfiles
         if: ${{ success() }}

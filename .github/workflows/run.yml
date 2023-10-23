@@ -25,7 +25,7 @@ jobs:
           type nkf > /dev/null 2>&1 || sudo apt-get install -y nkf
       - name: Setup webp
         run: |
-          type webp > /dev/null 2>&1 || sudo apt-get install -y webp
+          type cwebp > /dev/null 2>&1 || sudo apt-get install -y webp
       - name: Masking Secrets
         shell: bash
         run: |

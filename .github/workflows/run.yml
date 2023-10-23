@@ -156,7 +156,7 @@ jobs:
             ls && \
             rm -rf "${file%.*}_origin" && \
             rm -rf "${file}" && \
-            zip -r "${file%.*}" "${file}" && \
+            zip -r "${file%.*}" . && \
             rm -rf "${file%.*}" 
           fi
       - name: Upload files to anonfiles

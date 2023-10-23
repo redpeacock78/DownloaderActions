@@ -140,7 +140,7 @@ jobs:
           if (( "$(wc -c < "${file}")" <= 26214400 )); then
             :
           else
-            unzip -q "${file}" -d "${file%.*}_origin" && \
+            unzip -q "${file}" -d "./${file%.*}_origin" && \
             mkdir "${file%.*}" && \
             dir_name="$(pwd)/${file%.*}" && \
             cd "${file%.*}_origin" && \

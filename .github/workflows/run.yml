@@ -26,6 +26,9 @@ jobs:
       - name: Setup webp
         run: |
           type cwebp > /dev/null 2>&1 || sudo apt-get install -y webp
+      - name: Setup webp
+        run: |
+          type unar > /dev/null 2>&1 || sudo apt-get install -y unar
       - name: Masking Secrets
         shell: bash
         run: |
@@ -140,7 +143,7 @@ jobs:
           if (( "$(wc -c < "${file}")" <= 26214400 )); then
             :
           else
-            unzip -q "${file}" -d "./${file%.*}_origin" && \
+            unar -q -o "./${file%.*}_origin" "${file}" && \
             mkdir "${file%.*}" && \
             dir_name="$(pwd)/${file%.*}" && \
             cd "${file%.*}_origin" && \

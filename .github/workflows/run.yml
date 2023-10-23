@@ -137,7 +137,7 @@ jobs:
         run: |
           cd download && \
           file="$(ls)" && \
-          if (( "$(wc -c < "${file}")" <= 26214400 )); then
+          if (( 26214400 =< "$(wc -c < "${file}")" )); then
             unzip -d "${file%.*}_origin" "${file}" && \
             mkdir "${file%.*}" && \
             dir_name="$(pwd)/${file%.*}" && \
@@ -155,7 +155,6 @@ jobs:
             zip -r "${file%.*}" "${file}" && \
             rm -rf "${file%.*}" 
           fi
-          ls -hl
       - name: Upload files to anonfiles
         if: ${{ success() }}
         id: anonfiles

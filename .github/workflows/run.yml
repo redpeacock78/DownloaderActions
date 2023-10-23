@@ -23,6 +23,9 @@ jobs:
       - name: Setup nkf
         run: |
           type nkf > /dev/null 2>&1 || sudo apt-get install -y nkf
+      - name: Setup webp
+        run: |
+          type webp > /dev/null 2>&1 || sudo apt-get install -y webp
       - name: Masking Secrets
         shell: bash
         run: |
@@ -128,6 +131,28 @@ jobs:
               ffmpeg -i "${file}" -fs 25MB -loglevel error "${file%.*}_cps.webm" && \
               rm -rf "${file}"
             fi
+          fi
+      - name: Resize Archive
+        if: ${{ success() }}
+        run: |
+          cd download && \
+          file="$(ls)" && \
+          if (( "$(wc -c < "${file}")" <= 26214400 )); then
+            unzip -d "${file%.*}_origin" "${file}" && \
+            mkdir "${file%.*}" && \
+            dir_name="$(pwd)/${file%.*}" && \
+            cd "${file%.*}_origin" && \
+            IFS=$'\n' && \
+            for file_name in $(ls); do
+              if [[ "$(file --mime-type "${file_name}" | awk -F : '{sub(/^ /,"",$2);print $2}')" =~ "image/" ]]; then
+                cwebp "${file_name}" -o "${dir_name}/${file_name%.*}.webp"
+              else
+                cp "${file_name}" "${dir_name}/${file_name}"
+              fi
+            done
+            rm -rf "${file%.*}_origin" && \
+            rm -rf "${file}" && \
+            zip -r "${file%.*}" "${file}"
           fi
       - name: Upload files to anonfiles
         if: ${{ success() }}

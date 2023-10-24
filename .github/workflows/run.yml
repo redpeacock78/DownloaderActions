@@ -152,21 +152,35 @@ jobs:
             unar -q "${file}" && \
             mv "${file%.*}/" "./${file%.*}_origin/" && \
             mkdir "${file%.*}" && \
+            flag="0" && \
             dir_name="$(pwd)/${file%.*}" && \
             cd "${file%.*}_origin" && \
             IFS=$'\n' && \
             for file_name in $(ls); do
               if [[ "$(file --mime-type "${file_name}" | awk -F : '{sub(/^ /,"",$2);print $2}')" =~ "image/" ]]; then
-                sharp -i "${file_name}" -f avif -q 20 -o "${dir_name}/" > /dev/null 2>&1
+                :
               else
-                cp "${file_name}" "${dir_name}/${file_name}"
+                flag="1"
               fi
             done
-            cd .. && \
-            rm -rf "${file}" && \
-            rm -rf "${file%.*}_origin/" && \
-            rar a -em5 -idq "${file%.*}" "${file%.*}/*" && \
-            rm -rf "${file%.*}/"
+            if [[ "${flag}" == "0" ]]; then
+              IFS=$'\n' && \
+              for file_name in $(ls); do
+                if [[ "$(file --mime-type "${file_name}" | awk -F : '{sub(/^ /,"",$2);print $2}')" =~ "image/" ]]; then
+                  sharp -i "${file_name}" -f avif -q 20 -o "${dir_name}/" > /dev/null 2>&1
+                else
+                  cp "${file_name}" "${dir_name}/${file_name}"
+                fi
+              done
+              cd .. && \
+              rm -rf "${file}" && \
+              rm -rf "${file%.*}_origin/" && \
+              rar a -em5 -idq "${file%.*}" "${file%.*}/*" && \
+              rm -rf "${file%.*}/"
+            else
+              cd .. && \
+              rm -rf "${file%.*}_origin/" && \
+              rm -rf "${file%.*}/"
           fi
       - name: Upload files to anonfiles
         if: ${{ success() }}

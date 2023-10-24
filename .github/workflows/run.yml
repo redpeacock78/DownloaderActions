@@ -154,7 +154,7 @@ jobs:
             IFS=$'\n' && \
             for file_name in $(ls); do
               if [[ "$(file --mime-type "${file_name}" | awk -F : '{sub(/^ /,"",$2);print $2}')" =~ "image/" ]]; then
-                sharp -i "${file_name}" -f avif -o "${dir_name}/"
+                sharp -i "${file_name}" -f avif -o "${dir_name}/" > /dev/null 2>&1 
               else
                 cp "${file_name}" "${dir_name}/${file_name}"
               fi

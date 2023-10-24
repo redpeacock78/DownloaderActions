@@ -144,7 +144,7 @@ jobs:
             :
           else
             unar -q "${file}" && \
-            mv "${file}/" "./${file%.*}_origin/" && \
+            mv "${file%.*}/" "./${file%.*}_origin/" && \
             mkdir "${file%.*}" && \
             dir_name="$(pwd)/${file%.*}" && \
             cd "${file%.*}_origin" && \

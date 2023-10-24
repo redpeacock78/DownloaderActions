@@ -143,14 +143,11 @@ jobs:
           if (( "$(wc -c < "${file}")" <= 26214400 )); then
             :
           else
-            pwd
             unar -q "${file}" && \
-            rm -rf "${file}" && \
             mv "${file%.*}/" "./${file%.*}_origin/" && \
             mkdir "${file%.*}" && \
             dir_name="$(pwd)/${file%.*}" && \
             cd "${file%.*}_origin" && \
-            pwd
             IFS=$'\n' && \
             for file_name in $(ls); do
               if [[ "$(file --mime-type "${file_name}" | awk -F : '{sub(/^ /,"",$2);print $2}')" =~ "image/" ]]; then
@@ -159,9 +156,8 @@ jobs:
                 cp "${file_name}" "${dir_name}/${file_name}"
               fi
             done
-            pwd
-            cd .. & \
-            pwd
+            cd .. && \
+            rm -rf "${file}" && \
             rm -rf "${file%.*}_origin/" && \
             zip -q -r "${file%.*}" . && \
             rm -rf "${file%.*}/" && \

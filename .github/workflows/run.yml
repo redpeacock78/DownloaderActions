@@ -144,6 +144,7 @@ jobs:
             :
           else
             unar -q "${file}" && \
+            rm -rf "${file}" && \
             mv "${file%.*}/" "./${file%.*}_origin/" && \
             mkdir "${file%.*}" && \
             dir_name="$(pwd)/${file%.*}" && \
@@ -157,10 +158,9 @@ jobs:
               fi
             done
             cd .. & \
-            rm -rf "${file%.*}_origin" && \
-            rm -rf "${file}" && \
+            rm -rf "${file%.*}_origin/" && \
             zip -q -r "${file%.*}" . && \
-            rm -rf "${file%.*}" && \
+            rm -rf "${file%.*}/" && \
             ls -lh
           fi
       - name: Upload files to anonfiles

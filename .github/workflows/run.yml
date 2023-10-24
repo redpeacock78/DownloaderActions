@@ -26,7 +26,7 @@ jobs:
       - name: Setup webp
         run: |
           type cwebp > /dev/null 2>&1 || sudo apt-get install -y webp
-      - name: Setup webp
+      - name: Setup unar
         run: |
           type unar > /dev/null 2>&1 || sudo apt-get install -y unar
       - name: Masking Secrets
@@ -144,7 +144,7 @@ jobs:
             :
           else
             unar -q "${file}" && \
-            mv "${file}" "./${file%.*}_origin" && \
+            mv "${file}/" "./${file%.*}_origin/" && \
             mkdir "${file%.*}" && \
             dir_name="$(pwd)/${file%.*}" && \
             cd "${file%.*}_origin" && \

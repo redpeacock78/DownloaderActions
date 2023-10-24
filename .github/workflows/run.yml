@@ -181,6 +181,7 @@ jobs:
               cd .. && \
               rm -rf "${file%.*}_origin/" && \
               rm -rf "${file%.*}/"
+            fi
           fi
       - name: Upload files to anonfiles
         if: ${{ success() }}

@@ -15,17 +15,21 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: "14"
+          cache: npm
+      - name: Setup npm 7
+        run: |
+          npm i -g npm@7 --registry=https://registry.npmjs.org
       - name: Create directory
         shell: bash
         run: mkdir -p download
       - name: Setup ffmpeg
         uses: FedericoCarboni/setup-ffmpeg@v2
+      - name: Setup sharp
+        run: |
+          type sharp > /dev/null 2>&1 || npm i -g sharp-cli
       - name: Setup nkf
         run: |
           type nkf > /dev/null 2>&1 || sudo apt-get install -y nkf
-      - name: Setup webp
-        run: |
-          type cwebp > /dev/null 2>&1 || sudo apt-get install -y webp
       - name: Setup unar
         run: |
           type unar > /dev/null 2>&1 || sudo apt-get install -y unar
@@ -151,7 +155,7 @@ jobs:
             IFS=$'\n' && \
             for file_name in $(ls); do
               if [[ "$(file --mime-type "${file_name}" | awk -F : '{sub(/^ /,"",$2);print $2}')" =~ "image/" ]]; then
-                cwebp -quiet -m 5 "${file_name}" -o "${dir_name}/${file_name%.*}.webp"
+                sharp -i "${file_name}" -f avif -o "${dir_name}/"
               else
                 cp "${file_name}" "${dir_name}/${file_name}"
               fi

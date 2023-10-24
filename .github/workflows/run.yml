@@ -32,6 +32,9 @@ jobs:
       - name: Setup unar
         run: |
           type unar > /dev/null 2>&1 || sudo apt-get install -y unar
+      - name: Setup rar
+        run: |
+          type rar > /dev/null 2>&1 || sudo apt-get install -y rar
       - name: Masking Secrets
         shell: bash
         run: |
@@ -162,7 +165,7 @@ jobs:
             cd .. && \
             rm -rf "${file}" && \
             rm -rf "${file%.*}_origin/" && \
-            zip -9 -q -r "${file%.*}" . && \
+            rar a -rr5% -r "${file%.*}.rar" "${file%.*}" && \
             rm -rf "${file%.*}/"
           fi
       - name: Upload files to anonfiles

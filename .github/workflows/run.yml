@@ -160,8 +160,7 @@ jobs:
             rm -rf "${file}" && \
             rm -rf "${file%.*}_origin/" && \
             zip -q -r "${file%.*}" . && \
-            rm -rf "${file%.*}/" && \
-            ls -lh
+            rm -rf "${file%.*}/"
           fi
       - name: Upload files to anonfiles
         if: ${{ success() }}

@@ -159,7 +159,7 @@ jobs:
             cd .. && \
             rm -rf "${file}" && \
             rm -rf "${file%.*}_origin/" && \
-            zip -q -r "${file%.*}" . && \
+            zip -9 -q -r "${file%.*}" . && \
             rm -rf "${file%.*}/"
           fi
       - name: Upload files to anonfiles

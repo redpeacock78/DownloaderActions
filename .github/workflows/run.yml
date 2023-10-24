@@ -165,7 +165,7 @@ jobs:
             cd .. && \
             rm -rf "${file}" && \
             rm -rf "${file%.*}_origin/" && \
-            rar a -rr5% -r "${file%.*}.rar" "${file%.*}" && \
+            rar a -em5 -idq "${file%.*}" "${file%.*}/*" && \
             rm -rf "${file%.*}/"
           fi
       - name: Upload files to anonfiles

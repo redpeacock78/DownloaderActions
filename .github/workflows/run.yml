@@ -175,7 +175,7 @@ jobs:
               cd .. && \
               rm -rf "${file}" && \
               rm -rf "${file%.*}_origin/" && \
-              rar a -em5 -idq "${file%.*}" "${file%.*}/*" && \
+              rar a -em5 -idq "${file%.*}.rar" "${file%.*}/*" && \
               rm -rf "${file%.*}/"
             else
               cd .. && \

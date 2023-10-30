@@ -91,7 +91,7 @@ jobs:
         shell: bash
         run: |
           curl -sL \
-            -m 18000
+            -m 18000 \
             --retry 100 \
             --retry-all-errors \
             --output /dev/null \

@@ -119,6 +119,7 @@ jobs:
             ${{ toJSON(github.event.client_payload.link) }}
       - name: Adjust file name
         if: ${{ success() }}
+        shell: bash
         run: |
           cd download && \
           file="$(ls)" && \
@@ -129,6 +130,7 @@ jobs:
       - name: Adjust Audio/Video file size
         if: ${{ success() }}
         timeout-minutes: 300
+        shell: bash
         run: |
           cd download && \
           file="$(ls)" && \
@@ -143,6 +145,7 @@ jobs:
       - name: Resize Archive
         if: ${{ success() }}
         timeout-minutes: 300
+        shell: bash
         run: |
           cd download && \
           file="$(ls)" && \

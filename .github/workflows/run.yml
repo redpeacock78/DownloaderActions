@@ -15,9 +15,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: "16"
-      - name: Setup npm 7
-        run: |
-          npm i -g npm@7 --registry=https://registry.npmjs.org
       - name: Create directory
         shell: bash
         run: mkdir -p download
@@ -33,6 +30,7 @@ jobs:
           else
             sudo apt-get install -y ${is_nkf} ${is_rar} ${is_unar}
           fi
+          npm i -g npm@7 --registry=https://registry.npmjs.org && \
           type sharp > /dev/null 2>&1 || npm i -g sharp-cli
       - name: Masking Secrets
         shell: bash

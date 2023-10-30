@@ -21,6 +21,7 @@ jobs:
       - name: Setup ffmpeg
         uses: FedericoCarboni/setup-ffmpeg@v2
       - name: Setup Library
+        shell: bash
         run: |
           is_nkf=$(type nkf > /dev/null 2>&1 && : || echo -n nkf)
           is_rar=$(type rar > /dev/null 2>&1 && : || echo -n rar)
@@ -127,6 +128,7 @@ jobs:
           fi
       - name: Adjust Audio/Video file size
         if: ${{ success() }}
+        timeout-minutes: 300
         run: |
           cd download && \
           file="$(ls)" && \
@@ -140,6 +142,7 @@ jobs:
           fi
       - name: Resize Archive
         if: ${{ success() }}
+        timeout-minutes: 300
         run: |
           cd download && \
           file="$(ls)" && \

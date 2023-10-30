@@ -91,7 +91,7 @@ jobs:
         shell: bash
         run: |
           curl -sL \
-            -x http://localhost:8118 \
+            -m 18000
             --retry 100 \
             --retry-all-errors \
             --output /dev/null \

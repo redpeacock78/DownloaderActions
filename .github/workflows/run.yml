@@ -58,7 +58,7 @@ jobs:
         shell: bash
         run: |
           if [[ ${{ toJSON(github.event.client_payload.link) }} =~ ^http.*$ ]]; then
-            status="$(curl -siL -m 18000 -x http://localhost:8118 ${{ toJSON(github.event.client_payload.link) }} -o /dev/null -w '%{http_code}\n';:)"
+            status="$(curl -siL -m 18000 --retry 100 --retry-all-errors -x http://localhost:8118 ${{ toJSON(github.event.client_payload.link) }} -o /dev/null -w '%{http_code}\n';:)"
             if [[ "${status}" != "200" && "${status}" != "302" && "${status}" != "307" ]]; then
               status="notfound" && \
               echo "status=${status}" >> "$GITHUB_OUTPUT" && \
@@ -139,6 +139,14 @@ jobs:
               :
             else
               ffmpeg -i "${file}" -fs 25MB -loglevel error "${file%.*}_cps.webm" && \
+              rm -rf "${file}"
+            fi
+          fi
+          if [[ "$(file --mime-type "${file}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "audio/" ]]; then
+            if (( "$(wc -c < "${file}")" <= 26214400 )); then
+              :
+            else
+              ffmpeg -i "${file}" -fs 25MB -loglevel error "${file%.*}_cps.${file##*.}" && \
               rm -rf "${file}"
             fi
           fi

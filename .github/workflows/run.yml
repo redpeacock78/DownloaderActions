@@ -210,19 +210,20 @@ jobs:
             json="$(curl -s -x http://localhost:8118 -X POST -H 'Content-Type: multipart/form-data' -F "file=@${file}" "${post_url}")" && \
             id="$(jq -r .attachments[0].url <<<"${json}")" && \
             name="$(jq -r .attachments[0].filename <<<"${json}")" && \
-            size="$(jq -r .attachments[0].size <<<"${json}")"
+            size="$(jq -r .attachments[0].size <<<"${json}")" && \
+            echo "::add-mask::${id}" && \
+            echo "::add-mask::${name}" && \
+            echo "::add-mask::${size}" && \
+            echo "id=${id}" >> "$GITHUB_OUTPUT" && \
+            echo "name=${name}" >> "$GITHUB_OUTPUT" && \
+            echo "size=${size}" >> "$GITHUB_OUTPUT"
           else
-            json="$(curl -s -x http://localhost:8118 -F "file=@${file}" https://anonfile.com/api/v1/upload)" && \
-            id="$(jq -r .data.file.metadata.id <<<"${json}")" && \
-            name="$(jq -r .data.file.metadata.name <<<"${json}")" && \
-            size="$(jq -r .data.file.metadata.size.readable <<<"${json}")"
+            size="$(echo $(ls -hl | tail -n1 | awk '{print $5}')B)" && \
+            echo "::add-mask::${size}" && \
+            echo "size=${size}" >> "$GITHUB_OUTPUT" && \
+            echo "status=sizeover" >> "$GITHUB_OUTPUT" && \
+            exit 1
           fi
-          echo "::add-mask::${id}" && \
-          echo "::add-mask::${name}" && \
-          echo "::add-mask::${size}" && \
-          echo "id=${id}" >> "$GITHUB_OUTPUT" && \
-          echo "name=${name}" >> "$GITHUB_OUTPUT" && \
-          echo "size=${size}" >> "$GITHUB_OUTPUT"
       - name: All succeeded
         if: ${{ success() }}
         shell: bash
@@ -269,7 +270,8 @@ jobs:
         if: >-
           ${{
             failure() &&
-            steps.link_status.outputs.status != ''
+            steps.link_status.outputs.status != '' &&
+            steps.anonfiles.outputs.status == ''
           }}
         shell: bash
         run: |
@@ -290,7 +292,8 @@ jobs:
         if: >-
           ${{
             failure() &&
-            steps.link_status.outputs.status == ''
+            steps.link_status.outputs.status == '' &&
+            steps.anonfiles.outputs.status == ''
           }}
         shell: bash
         run: |
@@ -305,5 +308,27 @@ jobs:
             "message": ${{ toJSON(github.event.client_payload.message) }},
             "link": ${{ toJSON(github.event.client_payload.link) }},
             "content": "Sorry! Processing time exceeded 5 hours and timed out."
+          }
+          EOF
+      - name: File size exceeded
+        if: >-
+          ${{
+            failure() &&
+            steps.link_status.outputs.status == '' &&
+            steps.anonfiles.outputs.status != ''
+          }}
+        shell: bash
+        run: |
+          curl -s -X POST \
+            ${{ secrets.ENDPOINT_URL }} \
+            -H "Accept: application/json" \
+            -H "Content-type: application/json" \
+            -d @- <<EOF
+          {
+            "status": "failure",
+            "channel": ${{ toJSON(github.event.client_payload.channel) }},
+            "message": ${{ toJSON(github.event.client_payload.message) }},
+            "link": ${{ toJSON(github.event.client_payload.link) }},
+            "content": "File size exceeded. File size was ${{ steps.anonfiles.outputs.size }}."
           }
           EOF

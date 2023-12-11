@@ -115,7 +115,7 @@ jobs:
               --output /dev/null \
               "${{ secrets.IPFS_GATEWAY }}${{ steps.anonfiles.outputs.hash }}" && \
               flag=true
-              if "${flag}"; then
+            if "${flag}"; then
               :
             else
               ((retry++)) || true

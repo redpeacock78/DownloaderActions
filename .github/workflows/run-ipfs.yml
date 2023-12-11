@@ -51,6 +51,7 @@ jobs:
                 :
               else
                 ((retry++)) || true
+                sleep 1
               fi
             done
             if [[ "${status}" != "200" && "${status}" != "302" && "${status}" != "307" ]]; then

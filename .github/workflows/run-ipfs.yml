@@ -125,7 +125,7 @@ jobs:
         shell: bash
         run: |
           cd download && \
-          type="$(file "${{ steps.anonfiles.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')" && \
+          type="$(file --mime-type "${{ steps.anonfiles.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')" && \
           link="${{ secrets.IPFS_GATEWAY }}${{ steps.anonfiles.outputs.hash }}" && \
           curl -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \

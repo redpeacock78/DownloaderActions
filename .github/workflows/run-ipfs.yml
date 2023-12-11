@@ -114,7 +114,7 @@ jobs:
               --retry-all-errors \
               --output /dev/null \
               "${{ secrets.IPFS_GATEWAY }}${{ steps.anonfiles.outputs.hash }}" && \
-              flag=true
+            flag=true
             if "${flag}"; then
               :
             else

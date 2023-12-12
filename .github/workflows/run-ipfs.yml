@@ -99,8 +99,7 @@ jobs:
               mkdir -p "${dir}/conv" && \
               ffmpeg -i "${file}" -fs 10MB -loglevel error "${dir}/conv/${file%.*}.webm"
             fi
-          fi
-          if [[ "$(file --mime-type "${file}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "audio/" ]]; then
+          elif [[ "$(file --mime-type "${file}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "audio/" ]]; then
             if (( "$(wc -c < "${file}")" <= 10485760 )); then
               :
             else

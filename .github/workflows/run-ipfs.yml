@@ -166,8 +166,14 @@ jobs:
         if: ${{ success() }}
         shell: bash
         run: |
+          dir=$(pwd) && \
           cd download && \
-          type="$(file --mime-type "${{ steps.anonfiles.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')" && \
+          file="$(ls)" && \
+          if (( "$(wc -c < "${file}")" <= 10485760 )); then
+            type="$(file --mime-type "${{ steps.anonfiles.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')" 
+          else
+            type="$(file --mime-type "${dir}/conv/${{ steps.anonfiles.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')" 
+          fi && \
           link="${{ secrets.IPFS_GATEWAY }}${{ steps.anonfiles.outputs.hash }}" && \
           curl -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \

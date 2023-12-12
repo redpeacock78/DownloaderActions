@@ -93,19 +93,19 @@ jobs:
           cd download && \
           file="$(ls)" && \
           if [[ "$(file --mime-type "${file}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "video/" ]]; then
-            if (( "$(wc -c < "${file}")" <= 26214400 )); then
+            if (( "$(wc -c < "${file}")" <= 20971520 )); then
               :
             else
               mkdir -p "${dir}/conv" && \
-              ffmpeg -i "${file}" -fs 25MB -loglevel error "${dir}/conv/${file%.*}.webm"
+              ffmpeg -i "${file}" -fs 20MB -loglevel error "${dir}/conv/${file%.*}.webm"
             fi
           fi
           if [[ "$(file --mime-type "${file}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "audio/" ]]; then
-            if (( "$(wc -c < "${file}")" <= 26214400 )); then
+            if (( "$(wc -c < "${file}")" <= 20971520 )); then
               :
             else
               mkdir -p "${dir}/conv" && \
-              ffmpeg -i "${file}" -fs 25MB -loglevel error "${dir}/conv/${file%.*}.${file##*.}"
+              ffmpeg -i "${file}" -fs 20MB -loglevel error "${dir}/conv/${file%.*}.${file##*.}"
             fi
           fi
       - name: Upload files to ipfs
@@ -117,14 +117,14 @@ jobs:
           cd download && \
           file="$(ls)" && \
           if [[ "$(file --mime-type "${file}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "video/" ]]; then
-            if (( "$(wc -c < "${file}")" <= 26214400 )); then
+            if (( "$(wc -c < "${file}")" <= 20971520 )); then
               json="$(curl -s -x http://localhost:8118 -X POST -F file=@"${file}" ${{ secrets.IPFS_API }})"
             else
               json="$(curl -s -x http://localhost:8118 -X POST -F file=@"${dir}/conv/${file%.*}.webm" ${{ secrets.IPFS_API }})"
             fi
           fi && \
           if [[ "$(file --mime-type "${file}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "audio/" ]]; then
-            if (( "$(wc -c < "${file}")" <= 26214400 )); then
+            if (( "$(wc -c < "${file}")" <= 20971520 )); then
               json="$(curl -s -x http://localhost:8118 -X POST -F file=@"${file}" ${{ secrets.IPFS_API }})"
             else
               json="$(curl -s -x http://localhost:8118 -X POST -F file=@"${dir}/conv/${file%.*}.${file##*.}" ${{ secrets.IPFS_API }})"

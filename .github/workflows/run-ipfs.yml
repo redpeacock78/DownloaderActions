@@ -25,6 +25,8 @@ jobs:
           jq -r .client_payload.message < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
           cat secrets.txt && \
           rm -rf secrets.txt
+      - name: Setup ffmpeg
+        uses: FedericoCarboni/setup-ffmpeg@v2
       - name: Start Tor Proxy
         shell: bash
         run: |
@@ -83,13 +85,51 @@ jobs:
             --download-result=hide \
             --console-log-level=error \
             ${{ toJSON(github.event.client_payload.link) }}
+      - name: Adjust Audio/Video file size
+        if: ${{ success() }}
+        shell: bash
+        run: |
+          dir=$(pwd) && \
+          cd download && \
+          file="$(ls)" && \
+          if [[ "$(file --mime-type "${file}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "video/" ]]; then
+            if (( "$(wc -c < "${file}")" <= 26214400 )); then
+              :
+            else
+              mkdir -p "${dir}/conv" && \
+              ffmpeg -i "${file}" -fs 25MB -loglevel error "${dir}/conv/${file%.*}.webm"
+            fi
+          fi
+          if [[ "$(file --mime-type "${file}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "audio/" ]]; then
+            if (( "$(wc -c < "${file}")" <= 26214400 )); then
+              :
+            else
+              mkdir -p "${dir}/conv" && \
+              ffmpeg -i "${file}" -fs 25MB -loglevel error "${dir}/conv/${file%.*}.${file##*.}"
+            fi
+          fi
       - name: Upload files to ipfs
         if: ${{ success() }}
         id: anonfiles
         shell: bash
         run: |
+          dir=$(pwd) && \
           cd download && \
-          json="$(curl -s -x http://localhost:8118 -X POST -F file=@"$(ls)" ${{ secrets.IPFS_API }})" && \
+          file="$(ls)" && \
+          if [[ "$(file --mime-type "${file}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "video/" ]]; then
+            if (( "$(wc -c < "${file}")" <= 26214400 )); then
+              json="$(curl -s -x http://localhost:8118 -X POST -F file=@"${file}" ${{ secrets.IPFS_API }})"
+            else
+              json="$(curl -s -x http://localhost:8118 -X POST -F file=@"${dir}/conv/${file%.*}.webm" ${{ secrets.IPFS_API }})"
+            fi
+          fi && \
+          if [[ "$(file --mime-type "${file}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "audio/" ]]; then
+            if (( "$(wc -c < "${file}")" <= 26214400 )); then
+              json="$(curl -s -x http://localhost:8118 -X POST -F file=@"${file}" ${{ secrets.IPFS_API }})"
+            else
+              json="$(curl -s -x http://localhost:8118 -X POST -F file=@"${dir}/conv/${file%.*}.${file##*.}" ${{ secrets.IPFS_API }})"
+            fi
+          fi && \
           name="$(jq -r .Name <<<"${json}")" && \
           hash="$(jq -r .Hash <<<"${json}")" && \
           size="$(jq -r .Size <<<"${json}")"

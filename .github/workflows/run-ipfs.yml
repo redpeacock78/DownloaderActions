@@ -25,6 +25,10 @@ jobs:
           jq -r .client_payload.message < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
           cat secrets.txt && \
           rm -rf secrets.txt
+      - name: Setup Library
+        shell: bash
+        run: |
+          type nkf > /dev/null 2>&1 && : || sudo apt-get install -y nkf
       - name: Setup ffmpeg
         uses: FedericoCarboni/setup-ffmpeg@v2
       - name: Start Tor Proxy

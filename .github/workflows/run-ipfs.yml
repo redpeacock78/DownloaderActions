@@ -85,6 +85,16 @@ jobs:
             --download-result=hide \
             --console-log-level=error \
             ${{ toJSON(github.event.client_payload.link) }}
+      - name: Adjust file name
+        if: ${{ success() }}
+        shell: bash
+        run: |
+          cd download && \
+          file="$(ls)" && \
+          new_name="$(echo "${file}" | nkf -w --url-input)" && \
+          if [[ "${file}" != "${new_name}" ]]; then
+            mv "${file}" "${new_name}"
+          fi
       - name: Adjust Audio/Video file size
         if: ${{ success() }}
         shell: bash

@@ -183,7 +183,7 @@ jobs:
           dir=$(pwd) && \
           cd download && \
           file="$(ls)" && \
-          if (( "$(wc -c < "${file}")" <= 26214400 )); then
+          if (( "$(wc -c < "${file}")" <= 62914560 )); then
             type="$(file --mime-type "${{ steps.anonfiles.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')" 
           else
             type="$(file --mime-type "${dir}/conv/${{ steps.anonfiles.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')" 

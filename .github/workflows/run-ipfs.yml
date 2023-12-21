@@ -159,6 +159,7 @@ jobs:
         run: |
           retry=0
           flag=false
+          tmp="$(mktemp)"
           until "${flag}" || (( "${retry}" == 1000 )); do
             echo "Retry count: ${retry}"
             echo "Flag status: ${flag}"
@@ -167,15 +168,16 @@ jobs:
               --retry 100 \
               --retry-all-errors \
               --output /dev/null \
-              "${{ secrets.IPFS_GATEWAY }}${{ steps.anonfiles.outputs.hash }}" && \
-            flag=true
-            if "${flag}"; then
-              :
+              -w '%{http_code}\n' \
+              "${{ secrets.IPFS_GATEWAY }}${{ steps.anonfiles.outputs.hash }}" > "${tmp}" && \
+            if [[ "$(cat "${tmp}")" == "200" ]]; then
+              flag=true
             else
               ((retry++)) || true
+              sleep 1
             fi
-            sleep 1
           done
+          rm -rf "${tmp}"
       - name: All succeeded
         if: ${{ success() }}
         shell: bash

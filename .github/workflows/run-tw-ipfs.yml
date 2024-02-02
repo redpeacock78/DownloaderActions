@@ -214,7 +214,7 @@ jobs:
         run: |
           dir=$(pwd) && \
           cd download && \
-          file="$(ls -tr1 | awk 'NR==1{print}')" && \
+          file="$(ls -tr1 | grep '_00001')" && \
           json="$(curl -s -m 18000 --retry 100 --retry-all-errors -x http://localhost:8118 -X POST -F file=@"${file}" ${{ secrets.IPFS_API }})"
           name="$(jq -r .Name <<<"${json}")" && \
           hash="$(jq -r .Hash <<<"${json}")" && \
@@ -313,7 +313,7 @@ jobs:
         run: |
           dir=$(pwd) && \
           cd download && \
-          file="$(ls -tr1 | awk 'NR==2{print}')" && \
+          file="$(ls -tr1 | grep '_00002')" && \
           json="$(curl -s -m 18000 --retry 100 --retry-all-errors -x http://localhost:8118 -X POST -F file=@"${file}" ${{ secrets.IPFS_API }})"
           name="$(jq -r .Name <<<"${json}")" && \
           hash="$(jq -r .Hash <<<"${json}")" && \
@@ -411,7 +411,7 @@ jobs:
         run: |
           dir=$(pwd) && \
           cd download && \
-          file="$(ls -tr1 | awk 'NR==3{print}')" && \
+          file="$(ls -tr1 | grep '_00003')" && \
           json="$(curl -s -m 18000 --retry 100 --retry-all-errors -x http://localhost:8118 -X POST -F file=@"${file}" ${{ secrets.IPFS_API }})"
           name="$(jq -r .Name <<<"${json}")" && \
           hash="$(jq -r .Hash <<<"${json}")" && \
@@ -505,7 +505,7 @@ jobs:
         run: |
           dir=$(pwd) && \
           cd download && \
-          file="$(ls -tr1 | awk 'NR==4{print}')" && \
+          file="$(ls -tr1 | grep '_00004')" && \
           json="$(curl -s -m 18000 --retry 100 --retry-all-errors -x http://localhost:8118 -X POST -F file=@"${file}" ${{ secrets.IPFS_API }})"
           name="$(jq -r .Name <<<"${json}")" && \
           hash="$(jq -r .Hash <<<"${json}")" && \

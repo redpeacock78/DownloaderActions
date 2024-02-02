@@ -185,10 +185,18 @@ jobs:
         needs.Download.outputs.check_count == '4'
       }}
     steps:
+      - name: Create directory
+        id: dir
+        shell: bash
+        run: |
+          mkdir -p download && \
+          cd download && \
+          echo "path=$(pwd)" >> "${GITHUB_OUTPUT}"
       - name: Download files
         uses: actions/download-artifact@v4
         with:
           name: outputs-${{ github.run_number }}
+          path: ${{ steps.dir.outputs.path }}
       - name: Start Tor Proxy
         if: ${{ success() }}
         shell: bash

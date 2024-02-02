@@ -174,7 +174,7 @@ jobs:
         shell: bash
         run: |
           cd download && \
-          echo "result=$(find . -type f -depth 1 | wc -l)" >> "${GITHUB_OUTPUT}"
+          echo "result=$(ls | wc -l)" >> "${GITHUB_OUTPUT}"
 
   File01:
     runs-on: ubuntu-latest

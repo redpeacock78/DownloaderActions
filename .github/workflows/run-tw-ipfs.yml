@@ -11,7 +11,7 @@ jobs:
       check_count: ${{ steps.check_count.outputs.result }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Create directory
         shell: bash
         run: mkdir -p download
@@ -67,15 +67,6 @@ jobs:
               fi
             fi
           done
-      - name: Start Tor Proxy
-        shell: bash
-        run: |
-          docker run -it -d \
-            -p 8118:8118 \
-            -p 9050:9050 \
-            --name tor-proxy \
-            dperson/torproxy:latest && \
-          sleep 20
       - name: Confirmation of link survival
         if: ${{ success() }}
         id: link_status
@@ -175,6 +166,11 @@ jobs:
         run: |
           cd download && \
           echo "result=$(ls | wc -l)" >> "${GITHUB_OUTPUT}"
+      - name: Upload files
+        uses: actions/upload-artifact@v4
+        with:
+          name: outputs
+          path: download
 
   File01:
     runs-on: ubuntu-latest
@@ -189,7 +185,22 @@ jobs:
         needs.Download.outputs.check_count == '4'
       }}
     steps:
+      - name: Download files
+        uses: actions/download-artifact@v4
+        with:
+          name: outputs
+      - name: Start Tor Proxy
+        if: ${{ success() }}
+        shell: bash
+        run: |
+          docker run -it -d \
+            -p 8118:8118 \
+            -p 9050:9050 \
+            --name tor-proxy \
+            dperson/torproxy:latest && \
+          sleep 20
       - name: Upload file to ipfs
+        if: ${{ success() }}
         id: ipfs
         shell: bash
         run: |
@@ -273,7 +284,17 @@ jobs:
         needs.Download.outputs.check_count == '4'
       }}
     steps:
+      - name: Start Tor Proxy
+        shell: bash
+        run: |
+          docker run -it -d \
+            -p 8118:8118 \
+            -p 9050:9050 \
+            --name tor-proxy \
+            dperson/torproxy:latest && \
+          sleep 20
       - name: Upload file to ipfs
+        if: ${{ success() }}
         id: ipfs
         shell: bash
         run: |
@@ -356,7 +377,17 @@ jobs:
         needs.Download.outputs.check_count == '4'
       }}
     steps:
+      - name: Start Tor Proxy
+        shell: bash
+        run: |
+          docker run -it -d \
+            -p 8118:8118 \
+            -p 9050:9050 \
+            --name tor-proxy \
+            dperson/torproxy:latest && \
+          sleep 20
       - name: Upload file to ipfs
+        if: ${{ success() }}
         id: ipfs
         shell: bash
         run: |
@@ -438,7 +469,17 @@ jobs:
         needs.Download.outputs.check_count == '4'
       }}
     steps:
+      - name: Start Tor Proxy
+        shell: bash
+        run: |
+          docker run -it -d \
+            -p 8118:8118 \
+            -p 9050:9050 \
+            --name tor-proxy \
+            dperson/torproxy:latest && \
+          sleep 20
       - name: Upload file to ipfs
+        if: ${{ success() }}
         id: ipfs
         shell: bash
         run: |

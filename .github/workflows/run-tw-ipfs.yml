@@ -181,6 +181,8 @@ jobs:
     needs: Download
     if: >-
       ${{
+        !cancelled() &&
+        !failure() &&
         needs.Download.outputs.check_count == '1' &&
         needs.Download.outputs.check_count == '2' &&
         needs.Download.outputs.check_count == '3' &&
@@ -264,6 +266,8 @@ jobs:
     needs: Download
     if: >-
       ${{
+        !cancelled() &&
+        !failure() &&
         needs.Download.outputs.check_count == '2' &&
         needs.Download.outputs.check_count == '3' &&
         needs.Download.outputs.check_count == '4'
@@ -346,6 +350,8 @@ jobs:
     needs: Download
     if: >-
       ${{
+        !cancelled() &&
+        !failure() &&
         needs.Download.outputs.check_count == '3' &&
         needs.Download.outputs.check_count == '4'
       }}
@@ -425,7 +431,12 @@ jobs:
   File04:
     runs-on: ubuntu-latest
     needs: Download
-    if: ${{ needs.Download.outputs.check_count == '4' }}
+    if: >-
+      ${{
+        !cancelled() &&
+        !failure() &&
+        needs.Download.outputs.check_count == '4'
+      }}
     steps:
       - name: Upload file to ipfs
         id: ipfs

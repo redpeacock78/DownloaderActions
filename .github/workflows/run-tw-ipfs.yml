@@ -169,8 +169,10 @@ jobs:
       - name: Upload files
         uses: actions/upload-artifact@v4
         with:
-          name: outputs
+          name: outputs-${{ github.run_number }}
           path: download
+          compression-level: 9
+          retention-days: 1
 
   File01:
     runs-on: ubuntu-latest
@@ -186,7 +188,7 @@ jobs:
       - name: Download files
         uses: actions/download-artifact@v4
         with:
-          name: outputs
+          name: outputs-${{ github.run_number }}
       - name: Start Tor Proxy
         if: ${{ success() }}
         shell: bash
@@ -202,6 +204,7 @@ jobs:
         id: ipfs
         shell: bash
         run: |
+          ls
           dir=$(pwd) && \
           cd download && \
           file="$(ls -tr | head -n1)" && \
@@ -385,7 +388,6 @@ jobs:
         id: ipfs
         shell: bash
         run: |
-          ls
           dir=$(pwd) && \
           cd download && \
           file="$(ls -tr | head -n1)" && \

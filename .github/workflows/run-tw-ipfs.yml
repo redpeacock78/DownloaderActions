@@ -1,0 +1,500 @@
+name: DownloaderAction
+on:
+  repository_dispatch:
+    types:
+      - downloaderaction-tw-ipfs
+
+jobs:
+  Download:
+    runs-on: ubuntu-latest
+    outputs:
+      check_count: ${{ steps.check_count.outputs.result }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Create directory
+        shell: bash
+        run: mkdir -p download
+      - name: Masking Secrets
+        shell: bash
+        run: |
+          echo -n '::add-mask::' >> secrets.txt && \
+          jq -r .client_payload.link < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
+          echo -n '::add-mask::' >> secrets.txt && \
+          jq -r .client_payload.channel < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
+          echo -n '::add-mask::' >> secrets.txt && \
+          jq -r .client_payload.message < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
+          cat secrets.txt && \
+          rm -rf secrets.txt
+      - name: Setup and cache dependency
+        if: ${{ success() }}
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: ffmpeg
+          version: 1.0
+          execute_install_scripts: true
+      - name: Setup latest yt-dlp
+        if: ${{ success() }}
+        shell: bash
+        run: |
+          type yt-dlp > /dev/null 2>&1 || \
+          {
+            sudo curl -sL \
+              --retry 100 \
+              --retry-all-errors \
+              -o /usr/local/bin/yt-dlp \
+              https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp  && \
+            sudo chmod a+rx /usr/local/bin/yt-dlp
+          }
+      - name: When dependency is not found in the cache
+        if: ${{ success() }}
+        shell: bash
+        run: |
+          retry=0
+          flag=false
+          until "${flag}" || (( "${retry}" == 1000 )); do
+            echo "Retry count: ${retry}"
+            echo "Flag status: ${flag}"
+            if type ffmpeg > /dev/null 2>&1 && type ffprobe > /dev/null 2>&1 && type gawk > /dev/null 2>&1; then
+              flag=true
+            else
+              sudo apt-get update
+              sudo apt-get install -y ffmpeg gawk
+              if type ffmpeg > /dev/null 2>&1 && type ffprobe > /dev/null 2>&1 && type gawk > /dev/null 2>&1; then
+                flag=true
+              else
+                ((retry++)) || true
+              fi
+            fi
+          done
+      - name: Start Tor Proxy
+        shell: bash
+        run: |
+          docker run -it -d \
+            -p 8118:8118 \
+            -p 9050:9050 \
+            --name tor-proxy \
+            dperson/torproxy:latest && \
+          sleep 20
+      - name: Confirmation of link survival
+        if: ${{ success() }}
+        id: link_status
+        shell: bash
+        run: |
+          if [[ ${{ toJSON(github.event.client_payload.link) }} =~ ^http.*$ ]]; then
+            retry=0
+            flag=false
+            status=""
+            until "${flag}" || (( "${retry}" == 1000 )); do
+              echo "Retry count: ${retry}"
+              echo "Flag status: ${flag}"
+              status="$(curl -siL -m 18000 --retry 100 --retry-all-errors ${{ toJSON(github.event.client_payload.link) }} -o /dev/null -w '%{http_code}\n';:)"
+              if [[ "${status}" == "200" || "${status}" == "302" || "${status}" == "307" ]]; then
+                flag=true
+              else
+                ((retry++)) || true
+                sleep 1
+              fi
+            done
+            if [[ "${status}" != "200" && "${status}" != "302" && "${status}" != "307" ]]; then
+              status="notfound" && \
+              echo "status=${status}" >> "${GITHUB_OUTPUT}" && \
+              exit 2
+            fi
+          fi
+      - name: Start Download
+        if: ${{ success() }}
+        id: download
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          retry=0
+          flag=false
+          not_video=false
+          cookie_path=$(pwd) && \
+          echo "${{ secrets.TWITTER_COOKIES }}" >> cookie.txt && \
+          cd download && \
+          IFS=$'\n' && \
+          until "${flag}" || (( "${retry}" == 1000 )); do
+            echo "Retry count: ${retry}"
+            echo "Flag status: ${flag}"
+            yt_result="$(mktemp)"
+            yt-dlp -q \
+              -R 1000 \
+              --force-overwrites \
+              --cookies "${cookie_path}/cookie.txt" \
+              --downloader "$(type ffmpeg | awk '{print $3}')" \
+              -o "%(id)s_%(autonumber)s.%(ext)s" \
+              ${{ toJSON(github.event.client_payload.link) }} > "${yt_result}" 2>&1 && \
+              {
+                yt_status="0"
+                true
+              } || \
+              {
+                yt_status="1"
+                true
+              }
+            if [[ "${yt_status}" == "0" ]]; then
+              if [[ "$(cat ${yt_result} | tail -n1 | grep 'No video')" == "" ]]; then
+                for file_name in $(ls -tr); do
+                  if ffprobe -v error -f lavfi movie="${file_name}" > /dev/null 2>&1; then
+                    flag=true
+                  else
+                    :
+                  fi
+                done
+              else
+                :
+              fi
+            elif [[ "${yt_status}" == "1" ]]; then
+              if [[ "$(cat ${yt_result} | tail -n1 | grep 'No video')" != "" ]]; then
+                flag=true
+                not_video=true
+              else
+                :
+              fi
+            else
+              not_video=true
+            fi
+            if "${flag}"; then
+              :
+            else
+              ((retry++)) || true
+              sleep 1
+            fi
+          done
+          if "${not_video}"; then
+            status="notvideo" && \
+            echo "status=${status}" >> "${GITHUB_OUTPUT}" && \
+            exit 2
+          fi
+      - name: Check file count
+        if: ${{ success() }}
+        id: check_count
+        shell: bash
+        run: |
+          cd download && \
+          echo "result=$(find . -type f -depth 1 | wc -l)" >> "${GITHUB_OUTPUT}"
+
+  File01:
+    runs-on: ubuntu-latest
+    needs: Download
+    if: >-
+      ${{
+        needs.Download.outputs.check_count == '1' &&
+        needs.Download.outputs.check_count == '2' &&
+        needs.Download.outputs.check_count == '3' &&
+        needs.Download.outputs.check_count == '4'
+      }}
+    steps:
+      - name: Upload file to ipfs
+        id: ipfs
+        shell: bash
+        run: |
+          dir=$(pwd) && \
+          cd download && \
+          file="$(ls -tr | head -n1)" && \
+          json="$(curl -s -m 18000 --retry 100 --retry-all-errors -x http://localhost:8118 -X POST -F file=@"${file}" ${{ secrets.IPFS_API }})"
+          name="$(jq -r .Name <<<"${json}")" && \
+          hash="$(jq -r .Hash <<<"${json}")" && \
+          size="$(jq -r .Size <<<"${json}")"
+          echo "::add-mask::${hash}" && \
+          echo "::add-mask::${name}" && \
+          echo "::add-mask::${size}" && \
+          echo "hash=${hash}" >> "${GITHUB_OUTPUT}" && \
+          echo "name=${name}" >> "${GITHUB_OUTPUT}" && \
+          echo "size=${size}" >> "${GITHUB_OUTPUT}"
+      - name: Check Content
+        if: ${{ success() }}
+        shell: bash
+        run: |
+          retry=0
+          flag=false
+          tmp="$(mktemp)"
+          until "${flag}" || (( "${retry}" == 1000 )); do
+            echo "Retry count: ${retry}"
+            echo "Flag status: ${flag}"
+            curl -sL \
+              -m 18000 \
+              --retry 100 \
+              --retry-all-errors \
+              --output /dev/null \
+              -w '%{http_code}\n' \
+              "${{ secrets.IPFS_GATEWAY }}${{ steps.ipfs.outputs.hash }}" > "${tmp}" && \
+            if [[ "$(cat "${tmp}")" == "200" ]]; then
+              flag=true
+            else
+              ((retry++)) || true
+              sleep 1
+            fi
+          done
+          rm -rf "${tmp}"
+      - name: All succeeded
+        if: ${{ success() }}
+        shell: bash
+        run: |
+          dir=$(pwd) && \
+          cd download && \
+          file="$(ls)" && \
+          if (( "$(wc -c < "${file}")" <= 62914560 )); then
+            type="$(file --mime-type "${{ steps.ipfs.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')" 
+          else
+            type="$(file --mime-type "${dir}/conv/${{ steps.ipfs.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')" 
+          fi && \
+          link="${{ secrets.IPFS_GATEWAY }}${{ steps.ipfs.outputs.hash }}" && \
+          curl -s -X POST \
+            ${{ secrets.ENDPOINT_URL }} \
+            -H "Accept: application/json" \
+            -H "Content-type: application/json" \
+            -d @- <<EOF
+          {
+            "status": "success",
+            "channel": ${{ toJSON(github.event.client_payload.channel) }},
+            "message": ${{ toJSON(github.event.client_payload.message) }},
+            "title": "${{ steps.ipfs.outputs.name }}",
+            "size": "${{ steps.ipfs.outputs.size }}",
+            "type": "${type}",
+            "link": "${link}",
+            "origin_link": ${{ toJSON(github.event.client_payload.link) }}
+          }
+          EOF
+
+  File02:
+    runs-on: ubuntu-latest
+    needs: Download
+    if: >-
+      ${{
+        needs.Download.outputs.check_count == '2' &&
+        needs.Download.outputs.check_count == '3' &&
+        needs.Download.outputs.check_count == '4'
+      }}
+    steps:
+      - name: Upload file to ipfs
+        id: ipfs
+        shell: bash
+        run: |
+          dir=$(pwd) && \
+          cd download && \
+          file="$(ls -tr | head -n1)" && \
+          json="$(curl -s -m 18000 --retry 100 --retry-all-errors -x http://localhost:8118 -X POST -F file=@"${file}" ${{ secrets.IPFS_API }})"
+          name="$(jq -r .Name <<<"${json}")" && \
+          hash="$(jq -r .Hash <<<"${json}")" && \
+          size="$(jq -r .Size <<<"${json}")"
+          echo "::add-mask::${hash}" && \
+          echo "::add-mask::${name}" && \
+          echo "::add-mask::${size}" && \
+          echo "hash=${hash}" >> "${GITHUB_OUTPUT}" && \
+          echo "name=${name}" >> "${GITHUB_OUTPUT}" && \
+          echo "size=${size}" >> "${GITHUB_OUTPUT}"
+      - name: Check Content
+        if: ${{ success() }}
+        shell: bash
+        run: |
+          retry=0
+          flag=false
+          tmp="$(mktemp)"
+          until "${flag}" || (( "${retry}" == 1000 )); do
+            echo "Retry count: ${retry}"
+            echo "Flag status: ${flag}"
+            curl -sL \
+              -m 18000 \
+              --retry 100 \
+              --retry-all-errors \
+              --output /dev/null \
+              -w '%{http_code}\n' \
+              "${{ secrets.IPFS_GATEWAY }}${{ steps.ipfs.outputs.hash }}" > "${tmp}" && \
+            if [[ "$(cat "${tmp}")" == "200" ]]; then
+              flag=true
+            else
+              ((retry++)) || true
+              sleep 1
+            fi
+          done
+          rm -rf "${tmp}"
+      - name: All succeeded
+        if: ${{ success() }}
+        shell: bash
+        run: |
+          dir=$(pwd) && \
+          cd download && \
+          file="$(ls)" && \
+          if (( "$(wc -c < "${file}")" <= 62914560 )); then
+            type="$(file --mime-type "${{ steps.ipfs.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')" 
+          else
+            type="$(file --mime-type "${dir}/conv/${{ steps.ipfs.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')" 
+          fi && \
+          link="${{ secrets.IPFS_GATEWAY }}${{ steps.ipfs.outputs.hash }}" && \
+          curl -s -X POST \
+            ${{ secrets.ENDPOINT_URL }} \
+            -H "Accept: application/json" \
+            -H "Content-type: application/json" \
+            -d @- <<EOF
+          {
+            "status": "success",
+            "channel": ${{ toJSON(github.event.client_payload.channel) }},
+            "message": ${{ toJSON(github.event.client_payload.message) }},
+            "title": "${{ steps.ipfs.outputs.name }}",
+            "size": "${{ steps.ipfs.outputs.size }}",
+            "type": "${type}",
+            "link": "${link}",
+            "origin_link": ${{ toJSON(github.event.client_payload.link) }}
+          }
+          EOF
+
+  File03:
+    runs-on: ubuntu-latest
+    needs: Download
+    if: >-
+      ${{
+        needs.Download.outputs.check_count == '3' &&
+        needs.Download.outputs.check_count == '4'
+      }}
+    steps:
+      - name: Upload file to ipfs
+        id: ipfs
+        shell: bash
+        run: |
+          dir=$(pwd) && \
+          cd download && \
+          file="$(ls -tr | head -n1)" && \
+          json="$(curl -s -m 18000 --retry 100 --retry-all-errors -x http://localhost:8118 -X POST -F file=@"${file}" ${{ secrets.IPFS_API }})"
+          name="$(jq -r .Name <<<"${json}")" && \
+          hash="$(jq -r .Hash <<<"${json}")" && \
+          size="$(jq -r .Size <<<"${json}")"
+          echo "::add-mask::${hash}" && \
+          echo "::add-mask::${name}" && \
+          echo "::add-mask::${size}" && \
+          echo "hash=${hash}" >> "${GITHUB_OUTPUT}" && \
+          echo "name=${name}" >> "${GITHUB_OUTPUT}" && \
+          echo "size=${size}" >> "${GITHUB_OUTPUT}"
+      - name: Check Content
+        if: ${{ success() }}
+        shell: bash
+        run: |
+          retry=0
+          flag=false
+          tmp="$(mktemp)"
+          until "${flag}" || (( "${retry}" == 1000 )); do
+            echo "Retry count: ${retry}"
+            echo "Flag status: ${flag}"
+            curl -sL \
+              -m 18000 \
+              --retry 100 \
+              --retry-all-errors \
+              --output /dev/null \
+              -w '%{http_code}\n' \
+              "${{ secrets.IPFS_GATEWAY }}${{ steps.ipfs.outputs.hash }}" > "${tmp}" && \
+            if [[ "$(cat "${tmp}")" == "200" ]]; then
+              flag=true
+            else
+              ((retry++)) || true
+              sleep 1
+            fi
+          done
+          rm -rf "${tmp}"
+      - name: All succeeded
+        if: ${{ success() }}
+        shell: bash
+        run: |
+          dir=$(pwd) && \
+          cd download && \
+          file="$(ls)" && \
+          if (( "$(wc -c < "${file}")" <= 62914560 )); then
+            type="$(file --mime-type "${{ steps.ipfs.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')" 
+          else
+            type="$(file --mime-type "${dir}/conv/${{ steps.ipfs.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')" 
+          fi && \
+          link="${{ secrets.IPFS_GATEWAY }}${{ steps.ipfs.outputs.hash }}" && \
+          curl -s -X POST \
+            ${{ secrets.ENDPOINT_URL }} \
+            -H "Accept: application/json" \
+            -H "Content-type: application/json" \
+            -d @- <<EOF
+          {
+            "status": "success",
+            "channel": ${{ toJSON(github.event.client_payload.channel) }},
+            "message": ${{ toJSON(github.event.client_payload.message) }},
+            "title": "${{ steps.ipfs.outputs.name }}",
+            "size": "${{ steps.ipfs.outputs.size }}",
+            "type": "${type}",
+            "link": "${link}",
+            "origin_link": ${{ toJSON(github.event.client_payload.link) }}
+          }
+          EOF
+
+  File04:
+    runs-on: ubuntu-latest
+    needs: Download
+    if: ${{ needs.Download.outputs.check_count == '4' }}
+    steps:
+      - name: Upload file to ipfs
+        id: ipfs
+        shell: bash
+        run: |
+          dir=$(pwd) && \
+          cd download && \
+          file="$(ls -tr | head -n1)" && \
+          json="$(curl -s -m 18000 --retry 100 --retry-all-errors -x http://localhost:8118 -X POST -F file=@"${file}" ${{ secrets.IPFS_API }})"
+          name="$(jq -r .Name <<<"${json}")" && \
+          hash="$(jq -r .Hash <<<"${json}")" && \
+          size="$(jq -r .Size <<<"${json}")"
+          echo "::add-mask::${hash}" && \
+          echo "::add-mask::${name}" && \
+          echo "::add-mask::${size}" && \
+          echo "hash=${hash}" >> "${GITHUB_OUTPUT}" && \
+          echo "name=${name}" >> "${GITHUB_OUTPUT}" && \
+          echo "size=${size}" >> "${GITHUB_OUTPUT}"
+      - name: Check Content
+        if: ${{ success() }}
+        shell: bash
+        run: |
+          retry=0
+          flag=false
+          tmp="$(mktemp)"
+          until "${flag}" || (( "${retry}" == 1000 )); do
+            echo "Retry count: ${retry}"
+            echo "Flag status: ${flag}"
+            curl -sL \
+              -m 18000 \
+              --retry 100 \
+              --retry-all-errors \
+              --output /dev/null \
+              -w '%{http_code}\n' \
+              "${{ secrets.IPFS_GATEWAY }}${{ steps.ipfs.outputs.hash }}" > "${tmp}" && \
+            if [[ "$(cat "${tmp}")" == "200" ]]; then
+              flag=true
+            else
+              ((retry++)) || true
+              sleep 1
+            fi
+          done
+          rm -rf "${tmp}"
+      - name: All succeeded
+        if: ${{ success() }}
+        shell: bash
+        run: |
+          dir=$(pwd) && \
+          cd download && \
+          file="$(ls)" && \
+          if (( "$(wc -c < "${file}")" <= 62914560 )); then
+            type="$(file --mime-type "${{ steps.ipfs.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')" 
+          else
+            type="$(file --mime-type "${dir}/conv/${{ steps.ipfs.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')" 
+          fi && \
+          link="${{ secrets.IPFS_GATEWAY }}${{ steps.ipfs.outputs.hash }}" && \
+          curl -s -X POST \
+            ${{ secrets.ENDPOINT_URL }} \
+            -H "Accept: application/json" \
+            -H "Content-type: application/json" \
+            -d @- <<EOF
+          {
+            "status": "success",
+            "channel": ${{ toJSON(github.event.client_payload.channel) }},
+            "message": ${{ toJSON(github.event.client_payload.message) }},
+            "title": "${{ steps.ipfs.outputs.name }}",
+            "size": "${{ steps.ipfs.outputs.size }}",
+            "type": "${type}",
+            "link": "${link}",
+            "origin_link": ${{ toJSON(github.event.client_payload.link) }}
+          }
+          EOF

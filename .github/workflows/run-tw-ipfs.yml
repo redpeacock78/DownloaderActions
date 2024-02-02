@@ -212,10 +212,9 @@ jobs:
         id: ipfs
         shell: bash
         run: |
-          ls
           dir=$(pwd) && \
           cd download && \
-          file="$(ls -tr | head -n1)" && \
+          file="$(ls -tr1 | awk 'NR==1{print})" && \
           json="$(curl -s -m 18000 --retry 100 --retry-all-errors -x http://localhost:8118 -X POST -F file=@"${file}" ${{ secrets.IPFS_API }})"
           name="$(jq -r .Name <<<"${json}")" && \
           hash="$(jq -r .Hash <<<"${json}")" && \
@@ -257,12 +256,7 @@ jobs:
         run: |
           dir=$(pwd) && \
           cd download && \
-          file="$(ls)" && \
-          if (( "$(wc -c < "${file}")" <= 62914560 )); then
-            type="$(file --mime-type "${{ steps.ipfs.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')" 
-          else
-            type="$(file --mime-type "${dir}/conv/${{ steps.ipfs.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')" 
-          fi && \
+          type="$(file --mime-type "${{ steps.ipfs.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')"
           link="${{ secrets.IPFS_GATEWAY }}${{ steps.ipfs.outputs.hash }}" && \
           curl -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \
@@ -291,6 +285,18 @@ jobs:
         needs.Download.outputs.check_count == '4'
       }}
     steps:
+      - name: Create directory
+        id: dir
+        shell: bash
+        run: |
+          mkdir -p download && \
+          cd download && \
+          echo "path=$(pwd)" >> "${GITHUB_OUTPUT}"
+      - name: Download files
+        uses: actions/download-artifact@v4
+        with:
+          name: outputs-${{ github.run_number }}
+          path: ${{ steps.dir.outputs.path }}
       - name: Start Tor Proxy
         shell: bash
         run: |
@@ -307,7 +313,7 @@ jobs:
         run: |
           dir=$(pwd) && \
           cd download && \
-          file="$(ls -tr | head -n1)" && \
+          file="$(ls -tr1 | awk 'NR==2{print})" && \
           json="$(curl -s -m 18000 --retry 100 --retry-all-errors -x http://localhost:8118 -X POST -F file=@"${file}" ${{ secrets.IPFS_API }})"
           name="$(jq -r .Name <<<"${json}")" && \
           hash="$(jq -r .Hash <<<"${json}")" && \
@@ -349,12 +355,7 @@ jobs:
         run: |
           dir=$(pwd) && \
           cd download && \
-          file="$(ls)" && \
-          if (( "$(wc -c < "${file}")" <= 62914560 )); then
-            type="$(file --mime-type "${{ steps.ipfs.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')" 
-          else
-            type="$(file --mime-type "${dir}/conv/${{ steps.ipfs.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')" 
-          fi && \
+          type="$(file --mime-type "${{ steps.ipfs.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')"
           link="${{ secrets.IPFS_GATEWAY }}${{ steps.ipfs.outputs.hash }}" && \
           curl -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \
@@ -382,6 +383,18 @@ jobs:
         needs.Download.outputs.check_count == '4'
       }}
     steps:
+      - name: Create directory
+        id: dir
+        shell: bash
+        run: |
+          mkdir -p download && \
+          cd download && \
+          echo "path=$(pwd)" >> "${GITHUB_OUTPUT}"
+      - name: Download files
+        uses: actions/download-artifact@v4
+        with:
+          name: outputs-${{ github.run_number }}
+          path: ${{ steps.dir.outputs.path }}
       - name: Start Tor Proxy
         shell: bash
         run: |
@@ -398,7 +411,7 @@ jobs:
         run: |
           dir=$(pwd) && \
           cd download && \
-          file="$(ls -tr | head -n1)" && \
+          file="$(ls -tr1 | awk 'NR==3{print})" && \
           json="$(curl -s -m 18000 --retry 100 --retry-all-errors -x http://localhost:8118 -X POST -F file=@"${file}" ${{ secrets.IPFS_API }})"
           name="$(jq -r .Name <<<"${json}")" && \
           hash="$(jq -r .Hash <<<"${json}")" && \
@@ -440,12 +453,7 @@ jobs:
         run: |
           dir=$(pwd) && \
           cd download && \
-          file="$(ls)" && \
-          if (( "$(wc -c < "${file}")" <= 62914560 )); then
-            type="$(file --mime-type "${{ steps.ipfs.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')" 
-          else
-            type="$(file --mime-type "${dir}/conv/${{ steps.ipfs.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')" 
-          fi && \
+          type="$(file --mime-type "${{ steps.ipfs.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')"
           link="${{ secrets.IPFS_GATEWAY }}${{ steps.ipfs.outputs.hash }}" && \
           curl -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \
@@ -469,6 +477,18 @@ jobs:
     needs: Download
     if: ${{ needs.Download.outputs.check_count == '4' }}
     steps:
+      - name: Create directory
+        id: dir
+        shell: bash
+        run: |
+          mkdir -p download && \
+          cd download && \
+          echo "path=$(pwd)" >> "${GITHUB_OUTPUT}"
+      - name: Download files
+        uses: actions/download-artifact@v4
+        with:
+          name: outputs-${{ github.run_number }}
+          path: ${{ steps.dir.outputs.path }}
       - name: Start Tor Proxy
         shell: bash
         run: |
@@ -485,7 +505,7 @@ jobs:
         run: |
           dir=$(pwd) && \
           cd download && \
-          file="$(ls -tr | head -n1)" && \
+          file="$(ls -tr1 | awk 'NR==4{print})" && \
           json="$(curl -s -m 18000 --retry 100 --retry-all-errors -x http://localhost:8118 -X POST -F file=@"${file}" ${{ secrets.IPFS_API }})"
           name="$(jq -r .Name <<<"${json}")" && \
           hash="$(jq -r .Hash <<<"${json}")" && \
@@ -527,12 +547,7 @@ jobs:
         run: |
           dir=$(pwd) && \
           cd download && \
-          file="$(ls)" && \
-          if (( "$(wc -c < "${file}")" <= 62914560 )); then
-            type="$(file --mime-type "${{ steps.ipfs.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')" 
-          else
-            type="$(file --mime-type "${dir}/conv/${{ steps.ipfs.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')" 
-          fi && \
+          type="$(file --mime-type "${{ steps.ipfs.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')"
           link="${{ secrets.IPFS_GATEWAY }}${{ steps.ipfs.outputs.hash }}" && \
           curl -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \

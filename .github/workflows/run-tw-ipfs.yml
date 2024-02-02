@@ -385,6 +385,7 @@ jobs:
         id: ipfs
         shell: bash
         run: |
+          ls
           dir=$(pwd) && \
           cd download && \
           file="$(ls -tr | head -n1)" && \

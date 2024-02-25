@@ -169,7 +169,7 @@ jobs:
               --retry-all-errors \
               --output /dev/null \
               -w '%{http_code}\n' \
-              "${{ secrets.IPFS_GATEWAY }}${{ steps.anonfiles.outputs.hash }}" > "${tmp}" && \
+              "${{ secrets.IPFS_GATEWAY }}${{ steps.anonfiles.outputs.hash }}?filename=${{ steps.anonfiles.outputs.name }}" > "${tmp}" && \
             if [[ "$(cat "${tmp}")" == "200" ]]; then
               flag=true
             else
@@ -190,7 +190,7 @@ jobs:
           else
             type="$(file --mime-type "${dir}/conv/${{ steps.anonfiles.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')" 
           fi && \
-          link="${{ secrets.IPFS_GATEWAY }}${{ steps.anonfiles.outputs.hash }}" && \
+          link="${{ secrets.IPFS_GATEWAY }}${{ steps.anonfiles.outputs.hash }}?filename=${{ steps.anonfiles.outputs.name }}" && \
           curl -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \

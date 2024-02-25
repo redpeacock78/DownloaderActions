@@ -241,7 +241,7 @@ jobs:
               --retry-all-errors \
               --output /dev/null \
               -w '%{http_code}\n' \
-              "${{ secrets.IPFS_GATEWAY }}${{ steps.ipfs.outputs.hash }}" > "${tmp}" && \
+              "${{ secrets.IPFS_GATEWAY }}${{ steps.ipfs.outputs.hash }}?filename=${{ steps.ipfs.outputs.name }}" > "${tmp}" && \
             if [[ "$(cat "${tmp}")" == "200" ]]; then
               flag=true
             else
@@ -257,7 +257,7 @@ jobs:
           dir=$(pwd) && \
           cd download && \
           type="$(file --mime-type "${{ steps.ipfs.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')"
-          link="${{ secrets.IPFS_GATEWAY }}${{ steps.ipfs.outputs.hash }}" && \
+          link="${{ secrets.IPFS_GATEWAY }}${{ steps.ipfs.outputs.hash }}?filename=${{ steps.ipfs.outputs.name }}" && \
           curl -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \
@@ -340,7 +340,7 @@ jobs:
               --retry-all-errors \
               --output /dev/null \
               -w '%{http_code}\n' \
-              "${{ secrets.IPFS_GATEWAY }}${{ steps.ipfs.outputs.hash }}" > "${tmp}" && \
+              "${{ secrets.IPFS_GATEWAY }}${{ steps.ipfs.outputs.hash }}?filename=${{ steps.ipfs.outputs.name }}" > "${tmp}" && \
             if [[ "$(cat "${tmp}")" == "200" ]]; then
               flag=true
             else
@@ -356,7 +356,7 @@ jobs:
           dir=$(pwd) && \
           cd download && \
           type="$(file --mime-type "${{ steps.ipfs.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')"
-          link="${{ secrets.IPFS_GATEWAY }}${{ steps.ipfs.outputs.hash }}" && \
+          link="${{ secrets.IPFS_GATEWAY }}${{ steps.ipfs.outputs.hash }}?filename=${{ steps.ipfs.outputs.name }}" && \
           curl -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \
@@ -438,7 +438,7 @@ jobs:
               --retry-all-errors \
               --output /dev/null \
               -w '%{http_code}\n' \
-              "${{ secrets.IPFS_GATEWAY }}${{ steps.ipfs.outputs.hash }}" > "${tmp}" && \
+              "${{ secrets.IPFS_GATEWAY }}${{ steps.ipfs.outputs.hash }}?filename=${{ steps.ipfs.outputs.name }}" > "${tmp}" && \
             if [[ "$(cat "${tmp}")" == "200" ]]; then
               flag=true
             else
@@ -454,7 +454,7 @@ jobs:
           dir=$(pwd) && \
           cd download && \
           type="$(file --mime-type "${{ steps.ipfs.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')"
-          link="${{ secrets.IPFS_GATEWAY }}${{ steps.ipfs.outputs.hash }}" && \
+          link="${{ secrets.IPFS_GATEWAY }}${{ steps.ipfs.outputs.hash }}?filename=${{ steps.ipfs.outputs.name }}" && \
           curl -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \
@@ -532,7 +532,7 @@ jobs:
               --retry-all-errors \
               --output /dev/null \
               -w '%{http_code}\n' \
-              "${{ secrets.IPFS_GATEWAY }}${{ steps.ipfs.outputs.hash }}" > "${tmp}" && \
+              "${{ secrets.IPFS_GATEWAY }}${{ steps.ipfs.outputs.hash }}?filename=${{ steps.ipfs.outputs.name }}" > "${tmp}" && \
             if [[ "$(cat "${tmp}")" == "200" ]]; then
               flag=true
             else
@@ -548,7 +548,7 @@ jobs:
           dir=$(pwd) && \
           cd download && \
           type="$(file --mime-type "${{ steps.ipfs.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')"
-          link="${{ secrets.IPFS_GATEWAY }}${{ steps.ipfs.outputs.hash }}" && \
+          link="${{ secrets.IPFS_GATEWAY }}${{ steps.ipfs.outputs.hash }}?filename=${{ steps.ipfs.outputs.name }}" && \
           curl -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \

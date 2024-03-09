@@ -79,7 +79,7 @@ jobs:
             until "${flag}" || (( "${retry}" == 1000 )); do
               echo "Retry count: ${retry}"
               echo "Flag status: ${flag}"
-              status="$(curl -siL -m 18000 --retry 100 --retry-all-errors ${{ toJSON(github.event.client_payload.link) }} -o /dev/null -w '%{http_code}\n';:)"
+              status="$(curl -siL --head -m 18000 --retry 100 --retry-all-errors ${{ toJSON(github.event.client_payload.link) }} -o /dev/null -w '%{http_code}\n';:)"
               if [[ "${status}" == "200" || "${status}" == "302" || "${status}" == "307" ]]; then
                 flag=true
               else
@@ -236,6 +236,7 @@ jobs:
             echo "Retry count: ${retry}"
             echo "Flag status: ${flag}"
             curl -sL \
+              --head \
               -m 18000 \
               --retry 100 \
               --retry-all-errors \
@@ -335,6 +336,7 @@ jobs:
             echo "Retry count: ${retry}"
             echo "Flag status: ${flag}"
             curl -sL \
+              --head \
               -m 18000 \
               --retry 100 \
               --retry-all-errors \
@@ -433,6 +435,7 @@ jobs:
             echo "Retry count: ${retry}"
             echo "Flag status: ${flag}"
             curl -sL \
+              --head \
               -m 18000 \
               --retry 100 \
               --retry-all-errors \
@@ -527,6 +530,7 @@ jobs:
             echo "Retry count: ${retry}"
             echo "Flag status: ${flag}"
             curl -sL \
+              --head \
               -m 18000 \
               --retry 100 \
               --retry-all-errors \

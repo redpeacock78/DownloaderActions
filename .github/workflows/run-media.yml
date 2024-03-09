@@ -34,7 +34,7 @@ jobs:
         shell: bash
         run: |
           if [[ ${{ toJSON(github.event.client_payload.link) }} =~ ^http.*$ ]]; then
-            status="$(curl -siL ${{ toJSON(github.event.client_payload.link) }} -o /dev/null -w '%{http_code}\n';:)"
+            status="$(curl -siL --head ${{ toJSON(github.event.client_payload.link) }} -o /dev/null -w '%{http_code}\n';:)"
             if [[ "${status}" != "200" && "${status}" != "302" ]]; then
               status="notfound" && \
               echo "status=${status}" >> "$GITHUB_OUTPUT" && \

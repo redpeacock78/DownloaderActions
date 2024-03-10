@@ -39,6 +39,24 @@ jobs:
           type sharp > /dev/null 2>&1 || npm i -g sharp-cli
       - name: Setup ffmpeg
         uses: FedericoCarboni/setup-ffmpeg@v2
+      - name: Make dht.dat
+        if: ${{ success() }}
+        id: make_dht
+        shell: bash
+        run: |
+          hex=""
+          hex+="a1 a2"
+          hex+="02"
+          hex+="00 00 00"
+          hex+="00 03"
+          hex+=$(printf "%016x\n" $(date --utc +%s))
+          hex+="00 00 00 00 00 00 00 00"
+          hex+=$(dd if=/dev/random bs=1 count=40 status=none | sha1sum - | cut -c1-40)
+          hex+="00 00 00 00"
+          hex+="00 00 00 00"
+          hex+="00 00 00 00"
+          echo ${hex} | xxd -r -p > dht.dat && \
+          echo "dht_path=$(pwd)" >> "$GITHUB_OUTPUT"
       - name: Start Tor Proxy
         shell: bash
         run: |
@@ -78,18 +96,22 @@ jobs:
         timeout-minutes: 300
         shell: bash
         run: |
-          port=$(echo {6881..6999} | tr ' ' \\n | shuf -n1)
+          port=$(echo {6881..6999} | tr ' ' \\n | shuf -n1) && \
+          dht_path=${{ steps.make_dht.outputs.dht_path }} && \
           cd download && \
           docker run --rm -i \
             -p ${port}:${port} \
             -p ${port}:${port}/udp \
             -v $(pwd):/download \
+            -v ${dht_path}:/root/.cache/aria2 \
             --link tor-proxy:tor \
             redpeacock78/downloaderaction:latest \
             -s20 -j20 -x16 -k20M \
             --all-proxy="http://tor:8118" \
             --listen-port=${port} \
             --dht-listen-port=${port} \
+            --disable-ipv6=true \
+            --continue=true \
             --seed-time=0 \
             --max-tries=0 \
             --retry-wait=10 \

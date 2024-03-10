@@ -212,7 +212,8 @@ jobs:
             name="$(jq -r .Name <<<"${json}")"
             hash="$(jq -r .Hash <<<"${json}")"
             size="$(jq -r .Size <<<"${json}")"
-            if [[ "${name}" != "" && "${hash}" != "" && "${size}" != "" ]]; then
+            if [[ "${name}" != "" && "${hash}" != "" && "${size}" != "" ]] || \
+              [[ "${name}" != "null" && "${hash}" != "null" && "${size}" != "null" ]]; then
               flag=true
             else
               ((retry++)) || true

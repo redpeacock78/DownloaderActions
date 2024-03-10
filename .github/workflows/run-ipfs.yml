@@ -236,11 +236,10 @@ jobs:
             else
               json="$(curl -s -x http://localhost:8118 -X POST -F file=@"${file}" ${{ secrets.IPFS_API }})"
             fi && \
-            name="$(jq -r .Name <<<"${json}")"
-            hash="$(jq -r .Hash <<<"${json}")"
-            size="$(jq -r .Size <<<"${json}")"
-            if [[ "${name}" != "" && "${hash}" != "" && "${size}" != "" ]] || \
-              [[ "${name}" != "null" && "${hash}" != "null" && "${size}" != "null" ]]; then
+            name="$(jq -r ".Name // empty" <<<"${json}")"
+            hash="$(jq -r ".Hash // empty" <<<"${json}")"
+            size="$(jq -r ".Size // empty" <<<"${json}")"
+            if [[ "${name}" != "" && "${hash}" != "" && "${size}" != "" ]]; then
               flag=true
             else
               ((retry++)) || true

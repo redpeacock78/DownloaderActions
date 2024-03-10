@@ -32,9 +32,14 @@ jobs:
       - name: Setup Library
         shell: bash
         run: |
-          type nkf > /dev/null 2>&1 && : || sudo apt-get install -y nkf
-          type rar > /dev/null 2>&1 && : || sudo apt-get install -y rar
-          type unar > /dev/null 2>&1 && : || sudo apt-get install -y unar
+          is_nkf=$(type nkf > /dev/null 2>&1 && : || echo -n nkf)
+          is_rar=$(type rar > /dev/null 2>&1 && : || echo -n rar)
+          is_unar=$(type unar > /dev/null 2>&1 && : || echo -n unar)
+          if [[ ${is_nkf} == "" ]] && [[ ${is_rar} == "" ]] && [[ ${is_unar} == "" ]]; then
+            :
+          else
+            sudo apt-get install -y ${is_nkf} ${is_rar} ${is_unar}
+          fi
           npm i -g npm@7 --registry=https://registry.npmjs.org && \
           type sharp > /dev/null 2>&1 || npm i -g sharp-cli
       - name: Setup ffmpeg

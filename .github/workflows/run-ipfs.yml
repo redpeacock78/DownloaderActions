@@ -226,20 +226,20 @@ jobs:
             echo "Flag status: ${flag}"
             if [[ "$(file --mime-type "${file}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "video/" ]]; then
               if (( "$(wc -c < "${file}")" <= 62914560 )); then
-                json="$(curl -s -x http://localhost:8118 -X POST -F file=@"${file}" ${{ secrets.IPFS_API }})"
+                json="$(curl -s --proxy socks5h://localhost:9050 -X POST -F file=@"${file}" ${{ secrets.IPFS_API }})"
               else
-                json="$(curl -s -x http://localhost:8118 -X POST -F file=@"${dir}/conv/${file%.*}.webm" ${{ secrets.IPFS_API }})"
+                json="$(curl -s --proxy socks5h://localhost:9050 -X POST -F file=@"${dir}/conv/${file%.*}.webm" ${{ secrets.IPFS_API }})"
               fi
             elif [[ "$(file --mime-type "${file}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "audio/" ]]; then
               if (( "$(wc -c < "${file}")" <= 62914560 )); then
-                json="$(curl -s -x http://localhost:8118 -X POST -F file=@"${file}" ${{ secrets.IPFS_API }})"
+                json="$(curl -s --proxy socks5h://localhost:9050 -X POST -F file=@"${file}" ${{ secrets.IPFS_API }})"
               else
-                json="$(curl -s -x http://localhost:8118 -X POST -F file=@"${dir}/conv/${file%.*}.${file##*.}" ${{ secrets.IPFS_API }})"
+                json="$(curl -s --proxy socks5h://localhost:9050 -X POST -F file=@"${dir}/conv/${file%.*}.${file##*.}" ${{ secrets.IPFS_API }})"
               fi
             elif [[ "${type}" =~ "/zip" ]] || [[ "${type}" =~ "/x-7z-compressed" ]] || [[ "${type}" =~ "/x-rar" ]]; then
-              json="$(curl -s -x http://localhost:8118 -X POST -F file=@"${file}" ${{ secrets.IPFS_API }})"
+              json="$(curl -s --proxy socks5h://localhost:9050 -X POST -F file=@"${file}" ${{ secrets.IPFS_API }})"
             else
-              json="$(curl -s -x http://localhost:8118 -X POST -F file=@"${file}" ${{ secrets.IPFS_API }})"
+              json="$(curl -s --proxy socks5h://localhost:9050 -X POST -F file=@"${file}" ${{ secrets.IPFS_API }})"
             fi && \
             name="$(jq -r ".Name // empty" <<<"${json}")"
             hash="$(jq -r ".Hash // empty" <<<"${json}")"
@@ -296,6 +296,7 @@ jobs:
             type="$(file --mime-type "${dir}/conv/${{ steps.anonfiles.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')" 
           fi && \
           link="${{ secrets.IPFS_GATEWAY }}${{ steps.anonfiles.outputs.hash }}?filename=$(node -e "console.log(encodeURIComponent('${{ steps.anonfiles.outputs.name }}'))")" && \
+          size="$(echo ${{ steps.anonfiles.outputs.size }} | numfmt --to=si --suffix=B)"
           curl -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \

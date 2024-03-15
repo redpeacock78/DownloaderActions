@@ -307,7 +307,7 @@ jobs:
             "channel": ${{ toJSON(github.event.client_payload.channel) }},
             "message": ${{ toJSON(github.event.client_payload.message) }},
             "title": "${{ steps.anonfiles.outputs.name }}",
-            "size": "${{ steps.anonfiles.outputs.size }}",
+            "size": "${size}",
             "type": "${type}",
             "link": "${link}",
             "origin_link": ${{ toJSON(github.event.client_payload.link) }}

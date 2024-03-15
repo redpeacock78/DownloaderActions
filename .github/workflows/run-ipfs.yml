@@ -296,7 +296,7 @@ jobs:
             type="$(file --mime-type "${dir}/conv/${{ steps.anonfiles.outputs.name }}" | awk -F : '{sub(/^ /,"",$2);print $2}')" 
           fi && \
           link="${{ secrets.IPFS_GATEWAY }}${{ steps.anonfiles.outputs.hash }}?filename=$(node -e "console.log(encodeURIComponent('${{ steps.anonfiles.outputs.name }}'))")" && \
-          size="$(echo ${{ steps.anonfiles.outputs.size }} | numfmt --to=si --suffix=B)"
+          size="$(echo ${{ steps.anonfiles.outputs.size }} | numfmt --to=si --suffix=B)" && \
           curl -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \

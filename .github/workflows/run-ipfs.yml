@@ -163,6 +163,7 @@ jobs:
         run: |
           cd download && \
           file="$(ls)" && \
+          echo "::add-mask::${file}"
           if (( "$(wc -c < "${file}")" <= 26214400 )); then
             :
           else
@@ -187,15 +188,16 @@ jobs:
                 IFS=$'\n' && \
                 for file_name in $(ls); do
                   if [[ "$(file --mime-type "${file_name}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "image/" ]]; then
-                    sharp -i "${file_name}" -f avif -q 17 -o "${dir_name}/" > /dev/null 2>&1
+                    sharp -i "${file_name}" -f avif -q 17 -o "${dir_name}/" > /dev/null 2>&1 &
                   elif [[ "$(file --mime-type "${file_name}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "video/" ]]; then
-                    ffmpeg -i "${file}" -fs 60MB -loglevel error "${dir_name}/${file%.*}.webm"
+                    ffmpeg -i "${file}" -fs 60MB -loglevel error "${dir_name}/${file%.*}.webm" &
                   elif [[ "$(file --mime-type "${file_name}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "audio/" ]]; then
-                    ffmpeg -i "${file}" -fs 60MB -loglevel error "${dir_name}/${file%.*}.${file##*.}"
+                    ffmpeg -i "${file}" -fs 60MB -loglevel error "${dir_name}/${file%.*}.${file##*.}" &
                   else
-                    cp "${file_name}" "${dir_name}/${file_name}"
+                    cp "${file_name}" "${dir_name}/${file_name}" &
                   fi
                 done
+                wait
                 cd .. && \
                 rm -rf "${file}" && \
                 rm -rf "${file%.*}_origin/" && \

@@ -223,7 +223,7 @@ jobs:
           name=""
           hash=""
           size=""
-          until "${flag}" || (( "${retry}" == 1000 )); do
+          until "${flag}" || (( "${retry}" == 100000 )); do
             echo "Retry count: ${retry}"
             echo "Flag status: ${flag}"
             if [[ "$(file --mime-type "${file}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "video/" ]]; then
@@ -243,9 +243,9 @@ jobs:
             else
               json="$(curl -s --proxy socks5h://localhost:9050 -X POST -F file=@"${file}" ${{ secrets.IPFS_API }})"
             fi && \
-            name="$(jq -r ".Name // empty" <<<"${json}")"
-            hash="$(jq -r ".Hash // empty" <<<"${json}")"
-            size="$(jq -r ".Size // empty" <<<"${json}")"
+            name="$(jq -r -R "fromjson? | .Name // empty" <<<"${json}")"
+            hash="$(jq -r -R "fromjson? | .Hash // empty" <<<"${json}")"
+            size="$(jq -r -R "fromjson? | .Size // empty" <<<"${json}")"
             if [[ "${name}" != "" && "${hash}" != "" && "${size}" != "" ]]; then
               flag=true
             else

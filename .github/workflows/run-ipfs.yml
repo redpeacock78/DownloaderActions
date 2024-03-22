@@ -184,27 +184,36 @@ jobs:
                 fi
               done
               if [[ "${flag}" == "0" ]]; then
+                job=0 && \
                 IFS=$'\n' && \
                 for file_name in $(ls); do
                   if [[ "$(file --mime-type "${file_name}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "image/" ]]; then
                     while (( "$(jobs -r | wc -l)" >= 5 )); do
                       sleep 1
                     done
+                    echo "Job count: ${job}"
+                    ((job++)) || true
                     sharp -i "${file_name}" -f avif -q 17 -o "${dir_name}/" > /dev/null 2>&1 &
                   elif [[ "$(file --mime-type "${file_name}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "video/" ]]; then
                     while (( "$(jobs -r | wc -l)" >= 2 )); do
                       sleep 1
                     done
+                    echo "Job count: ${job}"
+                    ((job++)) || true
                     ffmpeg -i "${file}" -fs 60MB -loglevel error "${dir_name}/${file%.*}.webm" &
                   elif [[ "$(file --mime-type "${file_name}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "audio/" ]]; then
                     while (( "$(jobs -r | wc -l)" >= 2 )); do
                       sleep 1
                     done
+                    echo "Job count: ${job}"
+                    ((job++)) || true
                     ffmpeg -i "${file}" -fs 60MB -loglevel error "${dir_name}/${file%.*}.${file##*.}" &
                   else
                     while (( "$(jobs -r | wc -l)" >= 5 )); do
                       sleep 1
                     done
+                    echo "Job count: ${job}"
+                    ((job++)) || true
                     cp "${file_name}" "${dir_name}/${file_name}" &
                   fi
                 done

@@ -163,7 +163,6 @@ jobs:
         run: |
           cd download && \
           file="$(ls)" && \
-          echo "::add-mask::${file}"
           if (( "$(wc -c < "${file}")" <= 26214400 )); then
             :
           else

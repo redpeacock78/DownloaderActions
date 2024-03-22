@@ -205,7 +205,7 @@ jobs:
                     while (( "$(jobs -r | wc -l)" >= 5 )); do
                       sleep 1
                     done
-                    cp "${file_name}" "${dir_name}/${file_name}"
+                    cp "${file_name}" "${dir_name}/${file_name}" &
                   fi
                 done
                 wait

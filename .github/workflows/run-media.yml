@@ -29,12 +29,28 @@ jobs:
           jq -r .client_payload.message < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
           cat secrets.txt && \
           rm -rf secrets.txt
+      - name: Start Tor Proxy
+        shell: bash
+        run: |
+          domain="$(echo ${{ toJSON(github.event.client_payload.link) }} | sed -E 's/^.*(http|https):\/\/([^/]+).*/\2/g')"
+          if [[ "${domain}" =~ ^.*".onion"$ ]]; then
+            docker run -it -d \
+              -p 8118:8118 \
+              -p 9050:9050 \
+              --name tor-proxy \
+              dperson/torproxy:latest && \
+            sleep 20
+          fi
       - name: Confirmation of link survival
         id: link_status
         shell: bash
         run: |
           if [[ ${{ toJSON(github.event.client_payload.link) }} =~ ^http.*$ ]]; then
-            status="$(curl -siL --head ${{ toJSON(github.event.client_payload.link) }} -o /dev/null -w '%{http_code}\n';:)"
+            domain="$(echo ${{ toJSON(github.event.client_payload.link) }} | sed -E 's/^.*(http|https):\/\/([^/]+).*/\2/g')"
+            if [[ "${domain}" =~ ^.*".onion"$ ]]; then
+              proxy="$(echo -n " -x http://localhost:8118 ")"
+            fi
+            status="$(curl -siL --head ${proxy} ${{ toJSON(github.event.client_payload.link) }} -o /dev/null -w '%{http_code}\n';:)"
             if [[ "${status}" != "200" && "${status}" != "302" ]]; then
               status="notfound" && \
               echo "status=${status}" >> "$GITHUB_OUTPUT" && \
@@ -55,10 +71,14 @@ jobs:
         timeout-minutes: 300
         shell: bash
         run: |
+          domain="$(echo ${{ toJSON(github.event.client_payload.link) }} | sed -E 's/^.*(http|https):\/\/([^/]+).*/\2/g')"
+          if [[ "${domain}" =~ ^.*".onion"$ ]]; then
+            proxy="$(echo -n " --proxy http://localhost:8118 ")"
+          fi
           cookie_path=$(pwd) && \
           echo "${{ secrets.TWITTER_COOKIES }}" >> cookie.txt && \
           cd download && \
-          yt-dlp -q --cookies ${cookie_path}/cookie.txt \
+          yt-dlp -q ${proxy} --cookies ${cookie_path}/cookie.txt \
             -o "%(id)s_%(autonumber)s.%(ext)s" \
             ${{ toJSON(github.event.client_payload.link) }}
       - name: Check and Convert Files

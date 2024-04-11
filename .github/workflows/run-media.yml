@@ -73,7 +73,7 @@ jobs:
         run: |
           domain="$(echo ${{ toJSON(github.event.client_payload.link) }} | sed -E 's/^.*(http|https):\/\/([^/]+).*/\2/g')"
           if [[ "${domain}" =~ ^.*".onion"$ ]]; then
-            proxy="$(echo -n " --proxy http://localhost:8118 ")"
+            proxy="$(echo -n " --proxy socks5h://localhost:9050 ")"
           fi
           cookie_path=$(pwd) && \
           echo "${{ secrets.TWITTER_COOKIES }}" >> cookie.txt && \

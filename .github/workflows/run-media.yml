@@ -66,6 +66,27 @@ jobs:
         run: |
           sudo curl -sL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
           sudo chmod a+rx /usr/local/bin/yt-dlp
+      - name: Make dht.dat
+        if: ${{ success() }}
+        id: make_dht
+        shell: bash
+        run: |
+          domain="$(echo ${{ toJSON(github.event.client_payload.link) }} | sed -E 's/^.*(http|https):\/\/([^/]+).*/\2/g')"
+          if [[ "${domain}" =~ ^.*".onion"$ ]]; then
+            hex=""
+            hex+="a1 a2"
+            hex+="02"
+            hex+="00 00 00"
+            hex+="00 03"
+            hex+=$(printf "%016x\n" $(date --utc +%s))
+            hex+="00 00 00 00 00 00 00 00"
+            hex+=$(dd if=/dev/random bs=1 count=40 status=none | sha1sum - | cut -c1-40)
+            hex+="00 00 00 00"
+            hex+="00 00 00 00"
+            hex+="00 00 00 00"
+            echo ${hex} | xxd -r -p > dht.dat && \
+            echo "dht_path=$(pwd)" >> "$GITHUB_OUTPUT"
+          fi
       - name: Start Download
         if: ${{ success() }}
         timeout-minutes: 300
@@ -73,14 +94,37 @@ jobs:
         run: |
           domain="$(echo ${{ toJSON(github.event.client_payload.link) }} | sed -E 's/^.*(http|https):\/\/([^/]+).*/\2/g')"
           if [[ "${domain}" =~ ^.*".onion"$ ]]; then
-            proxy="$(echo -n " --proxy socks5h://localhost:9050 -R infinite ")"
+            port=$(echo {6881..6999} | tr ' ' \\n | shuf -n1) && \
+            dht_path=${{ steps.make_dht.outputs.dht_path }} && \
+            cd download && \
+            docker run --rm -i \
+              -p ${port}:${port} \
+              -p ${port}:${port}/udp \
+              -v $(pwd):/download \
+              -v ${dht_path}:/root/.cache/aria2 \
+              --link tor-proxy:tor \
+              redpeacock78/downloaderaction:latest \
+              -s20 -j20 -x16 -k20M \
+              --all-proxy="http://tor:8118" \
+              --listen-port=${port} \
+              --dht-listen-port=${port} \
+              --disable-ipv6=true \
+              --continue=true \
+              --seed-time=0 \
+              --max-tries=0 \
+              --retry-wait=10 \
+              --summary-interval=0 \
+              --download-result=hide \
+              --console-log-level=error \
+              ${{ toJSON(github.event.client_payload.link) }}
+          else
+            cookie_path=$(pwd) && \
+            echo "${{ secrets.TWITTER_COOKIES }}" >> cookie.txt && \
+            cd download && \
+            yt-dlp -q ${proxy} --cookies ${cookie_path}/cookie.txt \
+              -o "%(id)s_%(autonumber)s.%(ext)s" \
+              ${{ toJSON(github.event.client_payload.link) }}
           fi
-          cookie_path=$(pwd) && \
-          echo "${{ secrets.TWITTER_COOKIES }}" >> cookie.txt && \
-          cd download && \
-          yt-dlp -q ${proxy} --cookies ${cookie_path}/cookie.txt \
-            -o "%(id)s_%(autonumber)s.%(ext)s" \
-            ${{ toJSON(github.event.client_payload.link) }}
       - name: Check and Convert Files
         if: ${{ success() }}
         shell: bash

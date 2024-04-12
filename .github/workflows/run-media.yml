@@ -46,14 +46,27 @@ jobs:
         shell: bash
         run: |
           if [[ ${{ toJSON(github.event.client_payload.link) }} =~ ^http.*$ ]]; then
-            domain="$(echo ${{ toJSON(github.event.client_payload.link) }} | sed -E 's/^.*(http|https):\/\/([^/]+).*/\2/g')"
-            if [[ "${domain}" =~ ^.*".onion"$ ]]; then
-              proxy="$(echo -n " -x http://localhost:8118 ")"
-            fi
-            status="$(curl -siL --head ${proxy} ${{ toJSON(github.event.client_payload.link) }} -o /dev/null -w '%{http_code}\n';:)"
-            if [[ "${status}" != "200" && "${status}" != "302" ]]; then
+            retry=0
+            flag=false
+            status=""
+            until "${flag}" || (( "${retry}" == 1000 )); do
+              echo "Retry count: ${retry}"
+              echo "Flag status: ${flag}"
+              domain="$(echo ${{ toJSON(github.event.client_payload.link) }} | sed -E 's/^.*(http|https):\/\/([^/]+).*/\2/g')"
+              if [[ "${domain}" =~ ^.*".onion"$ ]]; then
+                proxy="$(echo -n " -x http://localhost:8118 ")"
+              fi
+              status="$(curl -siL --head ${proxy} ${{ toJSON(github.event.client_payload.link) }} -o /dev/null -w '%{http_code}\n';:)"
+              if [[ "${status}" == "200" || "${status}" == "302" || "${status}" == "307" ]]; then
+                flag=true
+              else
+                ((retry++)) || true
+                sleep 1
+              fi
+            done
+            if [[ "${status}" != "200" && "${status}" != "302" && "${status}" != "307" ]]; then
               status="notfound" && \
-              echo "status=${status}" >> "$GITHUB_OUTPUT" && \
+              echo "status=${status}" >> "${GITHUB_OUTPUT}" && \
               exit 2
             fi
           fi

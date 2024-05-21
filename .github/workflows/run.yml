@@ -207,7 +207,7 @@ jobs:
           if (( "$(wc -c < "${file}")" <= 26214400 )); then
             post_urls=("${{ secrets.C1_URL }}" "${{ secrets.C2_URL }}" "${{ secrets.C3_URL }}")
             post_url="${post_urls[$(($RANDOM % ${#post_urls[*]}))]}"
-            json="$(curl -s -x http://localhost:8118 -X POST -H 'Content-Type: multipart/form-data' -F "file=@${file}" "${post_url}")" && \
+            json="$(curl -s -m 18000 --retry 100 --retry-all-errors -x http://localhost:8118 -X POST -H 'Content-Type: multipart/form-data' -F "file=@${file}" "${post_url}")" && \
             id="$(jq -r .attachments[0].url <<<"${json}")" && \
             name="$(jq -r .attachments[0].filename <<<"${json}")" && \
             size="$(jq -r .attachments[0].size <<<"${json}")" && \
@@ -242,7 +242,7 @@ jobs:
             else
               proxy_link="${{ secrets.PROXY_URL }}${cdn_id}/${id}/${default_name}&file=${file_name}"
             fi
-            short_link="$(curl -s -X POST ${{ secrets.SHORTER_API }}/api/v0/shorter -d "{\"url\": \"${proxy_link}\"}" | jq -r .key)"
+            short_link="$(curl -s -m 18000 --retry 100 --retry-all-errors -X POST ${{ secrets.SHORTER_API }}/api/v0/shorter -d "{\"url\": \"${proxy_link}\"}" | jq -r .key)"
             link="${{ secrets.SHORTER_API }}/${short_link}"
           else
             name="${{ steps.anonfiles.outputs.name }}"
@@ -254,6 +254,9 @@ jobs:
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \
             -H "Content-type: application/json" \
+            -m 18000 \
+            --retry 100 \
+            --retry-all-errors \
             -d @- <<EOF
           {
             "status": "success",
@@ -279,6 +282,9 @@ jobs:
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \
             -H "Content-type: application/json" \
+            -m 18000 \
+            --retry 100 \
+            --retry-all-errors \
             -d @- <<EOF
           {
             "status": "failure",
@@ -301,6 +307,9 @@ jobs:
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \
             -H "Content-type: application/json" \
+            -m 18000 \
+            --retry 100 \
+            --retry-all-errors \
             -d @- <<EOF
           {
             "status": "failure",
@@ -323,6 +332,9 @@ jobs:
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \
             -H "Content-type: application/json" \
+            -m 18000 \
+            --retry 100 \
+            --retry-all-errors \
             -d @- <<EOF
           {
             "status": "failure",

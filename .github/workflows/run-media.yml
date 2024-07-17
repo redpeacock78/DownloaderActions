@@ -71,7 +71,7 @@ jobs:
             fi
           fi
       - name: Setup ffmpeg
-        uses: FedericoCarboni/setup-ffmpeg@v2
+        uses: FedericoCarboni/setup-ffmpeg@v3
         if: ${{ success() }}
       - name: Install yt-dlp
         if: ${{ success() }}

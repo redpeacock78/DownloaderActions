@@ -19,7 +19,7 @@ jobs:
         shell: bash
         run: mkdir -p download
       - name: Setup ffmpeg
-        uses: FedericoCarboni/setup-ffmpeg@v2
+        uses: FedericoCarboni/setup-ffmpeg@v3
       - name: Setup Library
         shell: bash
         run: |

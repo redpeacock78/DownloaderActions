@@ -43,7 +43,7 @@ jobs:
           npm i -g npm@7 --registry=https://registry.npmjs.org && \
           type sharp > /dev/null 2>&1 || npm i -g sharp-cli
       - name: Setup ffmpeg
-        uses: FedericoCarboni/setup-ffmpeg@v2
+        uses: FedericoCarboni/setup-ffmpeg@v3
       - name: Make dht.dat
         if: ${{ success() }}
         id: make_dht

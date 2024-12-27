@@ -251,9 +251,9 @@ jobs:
             default_name="$(awk -F '/' '{print $7}' <<<"${{ steps.anonfiles.outputs.id }}")"
             file_name="$(node -e "console.log(encodeURIComponent('${name//\'/'\'\'}'))")"
             if [[  "${type}" =~ "video/" ]]; then
-              generate="$(curl -s -m 18000 --retry 100 --retry-all-errors -X POST -H "Content-Type: application/json" "${{ secrets.PROXY_URL }}/generate" -d "{\"channelId\": \"${cdn_id}\", \"messageId\": \"${id}\", \"contentName\": "\${default_name}\", \"originalFileName\": \"${file_name}\"}")"
+              generate="$(curl -s -m 18000 --retry 100 --retry-all-errors -X POST -H "Content-Type: application/json" "${{ secrets.PROXY_URL }}/generate" -d "{\"channelId\": \"${cdn_id}\", \"messageId\": \"${id}\", \"contentName\": \"${default_name}\", \"originalFileName\": \"${file_name}\"}")"
             else
-              generate="$(curl -s -m 18000 --retry 100 --retry-all-errors -X POST -H "Content-Type: application/json" "${{ secrets.PROXY_URL }}/generate" -d "{\"channelId\": \"${cdn_id}\", \"messageId\": \"${id}\", \"contentName\": "\${default_name}\", \"originalFileName\": \"${file_name}\"}")"
+              generate="$(curl -s -m 18000 --retry 100 --retry-all-errors -X POST -H "Content-Type: application/json" "${{ secrets.PROXY_URL }}/generate" -d "{\"channelId\": \"${cdn_id}\", \"messageId\": \"${id}\", \"contentName\": \"${default_name}\", \"originalFileName\": \"${file_name}\"}")"
             fi
             digit="$(jq -r .digit <<<"${generate}")"
             encrypted="$(jq -r .encrypted <<<"${generate}")"

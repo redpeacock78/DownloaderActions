@@ -238,10 +238,13 @@ jobs:
             default_name="$(awk -F '/' '{print $7}' <<<"${{ steps.anonfiles.outputs.id }}")"
             file_name="$(node -e "console.log(encodeURIComponent('${name//\'/'\'\'}'))")"
             if [[  "${type}" =~ "video/" ]]; then
-              proxy_link="${{ secrets.PROXY_URL }}${cdn_id}/${id}/${default_name}"
+              generate="$(curl -s -m 18000 --retry 100 --retry-all-errors -X POST -H "Content-Type: application/json" "${{ secrets.PROXY_URL }}/generate" -d "{\"channelId\": \"${cdn_id}\", \"messageId\": \"${id}\", \"contentName\": "\${default_name}\", \"originalFileName\": \"${file_name}\"}")"
             else
-              proxy_link="${{ secrets.PROXY_URL }}${cdn_id}/${id}/${default_name}&file=${file_name}"
+              generate="$(curl -s -m 18000 --retry 100 --retry-all-errors -X POST -H "Content-Type: application/json" "${{ secrets.PROXY_URL }}/generate" -d "{\"channelId\": \"${cdn_id}\", \"messageId\": \"${id}\", \"contentName\": "\${default_name}\", \"originalFileName\": \"${file_name}\"}")"
             fi
+            digit="$(jq -r .digit <<<"${generate}")"
+            encrypted="$(jq -r .encrypted <<<"${generate}")"
+            proxy_link="${{ secrets.PROXY_URL }}/${digit}/${encrypted}"
             short_link="$(curl -s -m 18000 --retry 100 --retry-all-errors -X POST ${{ secrets.SHORTER_API }}/api/v0/shorter -d "{\"url\": \"${proxy_link}\"}" | jq -r .key)"
             link="${{ secrets.SHORTER_API }}/${short_link}"
           else

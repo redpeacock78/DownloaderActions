@@ -248,7 +248,7 @@ jobs:
             type="$(file --mime-type "${file}" | awk -F : '{sub(/^ /,"",$2);print $2}')"
             cdn_id="$(awk -F '/' '{print $5}' <<<"${{ steps.anonfiles.outputs.id }}")"
             id="$(awk -F '/' '{print $6}' <<<"${{ steps.anonfiles.outputs.id }}")"
-            default_name="$(awk -F '/' '{print $7}' <<<"${{ steps.anonfiles.outputs.id }}"| awk -F '?ex=' '{print $1}')"
+            default_name="${{ steps.anonfiles.outputs.name }}"
             if [[  "${type}" =~ "video/" ]]; then
               generate="$(curl -s -m 18000 --retry 100 --retry-all-errors -X POST -H "Content-Type: application/json" "${{ secrets.PROXY_URL }}/generate" -d "{\"channelId\": \"${cdn_id}\", \"messageId\": \"${id}\", \"contentName\": \"${default_name}\", \"originalFileName\": \"${name}\"}")"
             else

@@ -241,6 +241,7 @@ jobs:
           cd download && \
           file="$(ls)"
           name="${file}"
+          size="$(echo $(ls -hl | tail -n1 | awk '{print $5}')B)"
           type="$(file --mime-type "${file}" | awk -F : '{sub(/^ /,"",$2);print $2}')"
           digit="$(jq -r .digit <<<"${{ steps.anonfiles.outputs.generate }}")"
           encrypted="$(jq -r .encrypted <<<"${{ steps.anonfiles.outputs.generate }}")"
@@ -260,7 +261,7 @@ jobs:
             "channel": ${{ toJSON(github.event.client_payload.channel) }},
             "message": ${{ toJSON(github.event.client_payload.message) }},
             "title": "${name}",
-            "size": "${{ steps.anonfiles.outputs.size }}",
+            "size": "${size}",
             "type": "${type}",
             "link": "${link}",
             "origin_link": ${{ toJSON(github.event.client_payload.link) }}

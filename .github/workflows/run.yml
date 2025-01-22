@@ -224,7 +224,7 @@ jobs:
             if [[ "${type}" == "image/png" ]] || [[ "${type}" == "image/jpeg" ]]; then
               sudo curl -s -m 18000 --retry 100 --retry-all-errors -o "${file}" -X POST "${{ secrets.PROXY_URL }}/scramble" -F "file=@${file}"
             fi
-            json="$(curl -s -m 18000 --retry 100 --retry-all-errors -X POST "${{ secrets.PROXY_URL }}"/upload -F "file=@${file}")" && \
+            json="$(curl -s -m 18000 --retry 100 --retry-all-errors -X POST "${{ secrets.PROXY_URL }}/upload" -F "file=@${file}")" && \
             echo "::add-mask::${json}" && \
             echo "generate=${json}" >> "$GITHUB_OUTPUT"
           else

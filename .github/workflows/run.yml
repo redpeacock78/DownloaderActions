@@ -18,8 +18,8 @@ jobs:
       - name: Create directory
         shell: bash
         run: mkdir -p download
-      - name: Setup ffmpeg
-        uses: FedericoCarboni/setup-ffmpeg@v3
+      # - name: Setup ffmpeg
+      #   uses: FedericoCarboni/setup-ffmpeg@v3
       - name: Setup Library
         shell: bash
         run: |
@@ -37,11 +37,11 @@ jobs:
         shell: bash
         run: |
           echo -n '::add-mask::' >> secrets.txt && \
-          jq -r -R 'fromjson? | .client_payload.link' < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
+          jq -r '.client_payload.link' < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
           echo -n '::add-mask::' >> secrets.txt && \
-          jq -r -R 'fromjson? | .client_payload.channel' < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
+          jq -r '.client_payload.channel' < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
           echo -n '::add-mask::' >> secrets.txt && \
-          jq -r -R 'fromjson? | .client_payload.message' < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
+          jq -r '.client_payload.message' < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
           cat secrets.txt && \
           rm -rf secrets.txt
       - name: Start Tor Proxy
@@ -140,29 +140,29 @@ jobs:
           if [[ "${file}" != "${new_name}" ]]; then
             mv "${file}" "${new_name}"
           fi
-      - name: Adjust Audio/Video file size
-        if: ${{ success() }}
-        timeout-minutes: 300
-        shell: bash
-        run: |
-          cd download && \
-          file="$(ls)" && \
-          if [[ "$(file --mime-type "${file}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "video/" ]]; then
-            if (( "$(wc -c < "${file}")" <= 26214400 )); then
-              :
-            else
-              ffmpeg -i "${file}" -fs 25MB -loglevel error "${file%.*}_cps.webm" && \
-              rm -rf "${file}"
-            fi
-          fi
-          if [[ "$(file --mime-type "${file}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "audio/" ]]; then
-            if (( "$(wc -c < "${file}")" <= 26214400 )); then
-              :
-            else
-              ffmpeg -i "${file}" -fs 25MB -loglevel error "${file%.*}_cps.${file##*.}" && \
-              rm -rf "${file}"
-            fi
-          fi
+      # - name: Adjust Audio/Video file size
+      #   if: ${{ success() }}
+      #   timeout-minutes: 300
+      #   shell: bash
+      #   run: |
+      #     cd download && \
+      #     file="$(ls)" && \
+      #     if [[ "$(file --mime-type "${file}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "video/" ]]; then
+      #       if (( "$(wc -c < "${file}")" <= 26214400 )); then
+      #         :
+      #       else
+      #         ffmpeg -i "${file}" -fs 25MB -loglevel error "${file%.*}_cps.webm" && \
+      #         rm -rf "${file}"
+      #       fi
+      #     fi
+      #     if [[ "$(file --mime-type "${file}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "audio/" ]]; then
+      #       if (( "$(wc -c < "${file}")" <= 26214400 )); then
+      #         :
+      #       else
+      #         ffmpeg -i "${file}" -fs 25MB -loglevel error "${file%.*}_cps.${file##*.}" && \
+      #         rm -rf "${file}"
+      #       fi
+      #     fi
       - name: Resize Archive
         if: ${{ success() }}
         timeout-minutes: 300

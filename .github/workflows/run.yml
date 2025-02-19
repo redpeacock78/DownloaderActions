@@ -148,16 +148,8 @@ jobs:
         run: |
           cd download && \
           file="$(ls)" && \
-          if [[ "$(file --mime-type "${file}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "video/" ]]; then
-            if (( "$(wc -c < "${file}")" <= 104857600 )); then
-              :
-            else
-              ffmpeg -i "${file}" -fs 100MB -loglevel error "${file%.*}_cps.${file##*.}" && \
-              rm -rf "${file}" && \
-              mv "${file%.*}_cps.${file##*.}" "${file%.*}.${file##*.}"
-            fi
-          fi
-          if [[ "$(file --mime-type "${file}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "audio/" ]]; then
+          type="$(file --mime-type "${file}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" && \
+          if [[ "${type}" =~ "video/" ]] || [[ "${type}" =~ "audio/" ]]; then
             if (( "$(wc -c < "${file}")" <= 104857600 )); then
               :
             else

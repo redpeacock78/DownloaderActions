@@ -153,7 +153,8 @@ jobs:
               :
             else
               ffmpeg -i "${file}" -fs 100MB -loglevel error "${file%.*}_cps.mp4" && \
-              rm -rf "${file}"
+              rm -rf "${file}" && \
+              mv "${file%.*}_cps.mp4" "${file%.*}.mp4"
             fi
           fi
           if [[ "$(file --mime-type "${file}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "audio/" ]]; then
@@ -161,7 +162,8 @@ jobs:
               :
             else
               ffmpeg -i "${file}" -fs 100MB -loglevel error "${file%.*}_cps.${file##*.}" && \
-              rm -rf "${file}"
+              rm -rf "${file}" && \
+              mv "${file%.*}_cps.${file##*.}" "${file%.*}.${file##*.}"
             fi
           fi
       - name: Resize Archive

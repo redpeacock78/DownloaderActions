@@ -26,10 +26,11 @@ jobs:
           is_nkf=$(type nkf > /dev/null 2>&1 && : || echo -n nkf)
           is_rar=$(type rar > /dev/null 2>&1 && : || echo -n rar)
           is_unar=$(type unar > /dev/null 2>&1 && : || echo -n unar)
-          if [[ ${is_nkf} == "" ]] && [[ ${is_rar} == "" ]] && [[ ${is_unar} == "" ]]; then
+          is_ffmpeg=$(type ffmpeg > /dev/null 2>&1 && : || echo -n ffmpeg)
+          if [[ ${is_nkf} == "" ]] && [[ ${is_rar} == "" ]] && [[ ${is_unar} == "" ]] && [[ ${is_ffmpeg} == "" ]]; then
             :
           else
-            sudo apt-get install -y ${is_nkf} ${is_rar} ${is_unar}
+            sudo apt-get install -y ${is_nkf} ${is_rar} ${is_unar} ${is_ffmpeg}
           fi
           npm i -g npm@7 --registry=https://registry.npmjs.org && \
           type sharp > /dev/null 2>&1 || npm i -g sharp-cli@4.2.0
@@ -140,29 +141,29 @@ jobs:
           if [[ "${file}" != "${new_name}" ]]; then
             mv "${file}" "${new_name}"
           fi
-      # - name: Adjust Audio/Video file size
-      #   if: ${{ success() }}
-      #   timeout-minutes: 300
-      #   shell: bash
-      #   run: |
-      #     cd download && \
-      #     file="$(ls)" && \
-      #     if [[ "$(file --mime-type "${file}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "video/" ]]; then
-      #       if (( "$(wc -c < "${file}")" <= 26214400 )); then
-      #         :
-      #       else
-      #         ffmpeg -i "${file}" -fs 25MB -loglevel error "${file%.*}_cps.webm" && \
-      #         rm -rf "${file}"
-      #       fi
-      #     fi
-      #     if [[ "$(file --mime-type "${file}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "audio/" ]]; then
-      #       if (( "$(wc -c < "${file}")" <= 26214400 )); then
-      #         :
-      #       else
-      #         ffmpeg -i "${file}" -fs 25MB -loglevel error "${file%.*}_cps.${file##*.}" && \
-      #         rm -rf "${file}"
-      #       fi
-      #     fi
+      - name: Adjust Audio/Video file size
+        if: ${{ success() }}
+        timeout-minutes: 300
+        shell: bash
+        run: |
+          cd download && \
+          file="$(ls)" && \
+          if [[ "$(file --mime-type "${file}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "video/" ]]; then
+            if (( "$(wc -c < "${file}")" <= 104857600 )); then
+              :
+            else
+              ffmpeg -i "${file}" -fs 100MB -loglevel error "${file%.*}_cps.mp4" && \
+              rm -rf "${file}"
+            fi
+          fi
+          if [[ "$(file --mime-type "${file}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "audio/" ]]; then
+            if (( "$(wc -c < "${file}")" <= 104857600 )); then
+              :
+            else
+              ffmpeg -i "${file}" -fs 100MB -loglevel error "${file%.*}_cps.${file##*.}" && \
+              rm -rf "${file}"
+            fi
+          fi
       - name: Resize Archive
         if: ${{ success() }}
         timeout-minutes: 300

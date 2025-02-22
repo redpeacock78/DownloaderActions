@@ -30,6 +30,7 @@ jobs:
           if [[ ${is_nkf} == "" ]] && [[ ${is_rar} == "" ]] && [[ ${is_unar} == "" ]] && [[ ${is_ffmpeg} == "" ]]; then
             :
           else
+            sudo apt-get update && \
             sudo apt-get install -y ${is_nkf} ${is_rar} ${is_unar} ${is_ffmpeg}
           fi
           npm i -g npm@7 --registry=https://registry.npmjs.org && \

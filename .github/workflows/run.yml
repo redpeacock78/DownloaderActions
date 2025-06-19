@@ -23,6 +23,7 @@ jobs:
       - name: Setup Library
         shell: bash
         run: |
+          sudo snap remove jq
           is_nkf=$(type nkf > /dev/null 2>&1 && : || echo -n nkf)
           is_rar=$(type rar > /dev/null 2>&1 && : || echo -n rar)
           is_unar=$(type unar > /dev/null 2>&1 && : || echo -n unar)
@@ -31,7 +32,7 @@ jobs:
             :
           else
             sudo apt-get update && \
-            sudo apt-get install -y ${is_nkf} ${is_rar} ${is_unar} ${is_ffmpeg}
+            sudo apt-get install -y jq ${is_nkf} ${is_rar} ${is_unar} ${is_ffmpeg}
           fi
           npm i -g npm@7 --registry=https://registry.npmjs.org && \
           type sharp > /dev/null 2>&1 || npm i -g sharp-cli@4.2.0
@@ -235,8 +236,8 @@ jobs:
           name="${file}"
           size="$(echo $(ls -hl | tail -n1 | awk '{print $5}')B)"
           type="$(file --mime-type "${file}" | awk -F : '{sub(/^ /,"",$2);print $2}')"
-          digit="$(echo "${{ toJSON(steps.anonfiles.outputs.generate) }}" | jq -r -R 'fromjson? | .digit')"
-          encrypted="$(echo "${{ toJSON(steps.anonfiles.outputs.generate) }}" | jq -r -R 'fromjson? | .encrypted')"
+          digit="$(jq -r -R 'fromjson? | .digit' <<<"${{ toJSON(steps.anonfiles.outputs.generate) }}")"
+          encrypted="$(jq -r -R 'fromjson? | .encrypted' <<<"${{ toJSON(steps.anonfiles.outputs.generate) }}")"
           proxy_link="${{ secrets.PROXY_URL }}/${digit}/${encrypted}"
           short_link="$(curl -s -m 18000 --retry 100 --retry-all-errors -X POST ${{ secrets.SHORTER_API }}/api/v0/shorter -d "{\"url\": \"${proxy_link}\"}" | jq -r -R 'fromjson? | .key')"
           link="${{ secrets.SHORTER_API }}/${short_link}"

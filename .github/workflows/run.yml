@@ -216,7 +216,18 @@ jobs:
           name="${file}"
           type="$(file --mime-type "${file}" | awk -F : '{sub(/^ /,"",$2);print $2}')"
           if (( "$(wc -c < "${file}")" <= 104857600 )); then
-            json="$(curl -s -m 18000 --retry 100 --retry-all-errors -X POST "${{ secrets.PROXY_URL }}/upload" -F "file=@${file}")" && \
+            json=""
+            retry=0
+            flag=false
+            until "${flag}" || (( "${retry}" == 1000 )); do
+              json="$(curl -s -m 18000 --retry 1000 --retry-all-errors -X POST "${{ secrets.PROXY_URL }}/upload" -F "file=@${file}")"
+              if [[ "${json}" != "" ]]; then
+                flag=true
+              else
+                ((retry++)) || true
+                sleep 1
+              fi
+            done
             echo "::add-mask::${json}" && \
             echo "generate=${json}" >> "$GITHUB_OUTPUT"
           else
@@ -238,7 +249,19 @@ jobs:
           digit="$(jq -r -R 'fromjson? | .digit' <<<"${{ steps.anonfiles.outputs.generate }}")"
           encrypted="$(jq -r -R 'fromjson? | .encrypted' <<<"${{ steps.anonfiles.outputs.generate }}")"
           proxy_link="${{ secrets.PROXY_URL }}/${digit}/${encrypted}"
-          short_link="$(curl -s -m 18000 --retry 100 --retry-all-errors -X POST ${{ secrets.SHORTER_API }}/api/v0/shorter -d "{\"url\": \"${proxy_link}\"}" | jq -r -R 'fromjson? | .key')"
+          echo "/${digit}/${encrypted}"
+          retry=0
+          flag=false
+          short_link=""
+          until "${flag}" || (( "${retry}" == 1000 )); do
+            short_link="$(curl -s -m 18000 --retry 1000 --retry-all-errors -X POST ${{ secrets.SHORTER_API }}/api/v0/shorter -d "{\"url\": \"${proxy_link}\"}" | jq -r -R 'fromjson? | .key')"
+            if [[ "${short_link}" != "" ]]; then
+              flag=true
+            else
+              ((retry++)) || true
+              sleep 1
+            fi
+          done
           link="${{ secrets.SHORTER_API }}/${short_link}"
           curl -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \

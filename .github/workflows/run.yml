@@ -223,7 +223,9 @@ jobs:
               echo "Retry count: ${retry}"
               echo "Flag status: ${flag}"
               json="$(curl -s -m 18000 --retry 1000 --retry-all-errors -X POST "${{ secrets.PROXY_URL }}/upload" -F "file=@${file}")"
-              if [[ "${json}" != "" ]]; then
+              digit="$(jq -r -R 'fromjson? | .digit' <<< "${json}")"
+              encrypted="$(jq -r -R 'fromjson? | .encrypted' <<< "${json}")"
+              if [[ "${json}" != "" ]] || [[ "${digit}" != "" ]] || [[ "${encrypted}" != "" ]]; then
                 flag=true
               else
                 ((retry++)) || true
@@ -258,7 +260,8 @@ jobs:
           until "${flag}" || (( "${retry}" == 1000 )); do
             echo "Retry count: ${retry}"
             echo "Flag status: ${flag}"
-            short_link="$(curl -s -m 18000 --retry 1000 --retry-all-errors -X POST ${{ secrets.SHORTER_API }}/api/v0/shorter -d "{\"url\": \"${proxy_link}\"}")"
+            json_payload="$(jq -n --arg url "${proxy_link}" '{url: $url}')"
+            short_link="$(curl -s -m 18000 --retry 1000 --retry-all-errors -X POST ${{ secrets.SHORTER_API }}/api/v0/shorter -d "${json_payload}")"
             if [[ "${short_link}" != "" ]]; then
               flag=true
             else

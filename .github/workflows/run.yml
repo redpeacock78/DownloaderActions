@@ -235,7 +235,7 @@ jobs:
             echo "::add-mask::${json}" && \
             echo "${json}" >> upload.json
           else
-            size="$(echo $(ls -hl | tail -n1 | awk '{print $5}')B)" && \
+            size="$(echo $(ls -hl | grep -v 'upload.json' | tail -n1 | awk '{print $5}')B)" && \
             echo "::add-mask::${size}" && \
             echo "size=${size}" >> "$GITHUB_OUTPUT" && \
             echo "status=sizeover" >> "$GITHUB_OUTPUT" && \
@@ -246,9 +246,9 @@ jobs:
         shell: bash
         run: |
           cd download && \
-          file="$(ls)"
+          file="$(ls | grep -v 'upload.json')"
           name="${file}"
-          size="$(echo $(ls -hl | tail -n1 | awk '{print $5}')B)"
+          size="$(echo $(ls -hl | grep -v 'upload.json' | tail -n1 | awk '{print $5}')B)"
           type="$(file --mime-type "${file}" | awk -F : '{sub(/^ /,"",$2);print $2}')"
           digit="$(jq -r -R 'fromjson? | .digit' < upload.json)"
           encrypted="$(jq -r -R 'fromjson? | .encrypted' < upload.json)"

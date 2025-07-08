@@ -222,7 +222,7 @@ jobs:
             until "${flag}" || (( "${retry}" == 1000 )); do
               echo "Retry count: ${retry}"
               echo "Flag status: ${flag}"
-              json="$(curl -s -m 18000 --retry 1000 --retry-all-errors -X POST "${{ secrets.PROXY_URL }}/upload" -F "file=@${file}")"
+              json="$(curl -s -m 300000 --retry 1000 --retry-all-errors -X POST "${{ secrets.PROXY_URL }}/upload" -F "file=@${file}")"
               # digit="$(jq -r -R 'fromjson? | .digit' <<< "${json}")"
               # encrypted="$(jq -r -R 'fromjson? | .encrypted' <<< "${json}")"
               if jq -e . <<< "${json}" >/dev/null 2>&1; then

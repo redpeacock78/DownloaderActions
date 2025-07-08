@@ -262,7 +262,7 @@ jobs:
           proxy_link="${{ secrets.PROXY_URL }}/${digit}/${encrypted}"
           retry=0
           flag=false
-          short_link=""
+          json=""
           until "${flag}" || (( "${retry}" == 1000 )); do
             echo "Retry count: ${retry}"
             echo "Flag status: ${flag}"
@@ -281,7 +281,7 @@ jobs:
               sleep 1
             fi
           done
-          echo "${short_link}" >> short.json
+          echo "${json}" >> short.json
           key="$(jq -r -R 'fromjson? | .key' < short.json)"
           echo "/${key}"
           link="${{ secrets.SHORTER_API }}/${key}"

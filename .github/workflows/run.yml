@@ -252,27 +252,28 @@ jobs:
           type="$(file --mime-type "${file}" | awk -F : '{sub(/^ /,"",$2);print $2}')"
           digit="$(jq -r -R 'fromjson? | .digit' < upload.json)"
           encrypted="$(jq -r -R 'fromjson? | .encrypted' < upload.json)"
-          proxy_link="${{ secrets.PROXY_URL }}/${digit}/${encrypted}"
+          # proxy_link="${{ secrets.PROXY_URL }}/${digit}/${encrypted}"
           echo "/${digit}/${encrypted}"
-          retry=0
-          flag=false
-          short_link=""
-          until "${flag}" || (( "${retry}" == 1000 )); do
-            echo "Retry count: ${retry}"
-            echo "Flag status: ${flag}"
-            json_payload="$(jq -n --arg url "${proxy_link}" '{url: $url}')"
-            short_link="$(curl -s -m 18000 --retry 1000 --retry-all-errors -X POST ${{ secrets.SHORTER_API }}/api/v0/shorter -d "${json_payload}")"
-            if [[ "${short_link}" != "" ]]; then
-              flag=true
-            else
-              ((retry++)) || true
-              sleep 1
-            fi
-          done
-          echo "${short_link}" >> short.json
-          key="$(jq -r -R 'fromjson? | .key' < short.json)"
-          echo "/${key}"
-          link="${{ secrets.SHORTER_API }}/${key}"
+          # retry=0
+          # flag=false
+          # short_link=""
+          # until "${flag}" || (( "${retry}" == 1000 )); do
+          #   echo "Retry count: ${retry}"
+          #   echo "Flag status: ${flag}"
+          #   json_payload="$(jq -n --arg url "${proxy_link}" '{url: $url}')"
+          #   short_link="$(curl -s -m 18000 --retry 1000 --retry-all-errors -X POST ${{ secrets.SHORTER_API }}/api/v0/shorter -d "${json_payload}")"
+          #   if [[ "${short_link}" != "" ]]; then
+          #     flag=true
+          #   else
+          #     ((retry++)) || true
+          #     sleep 1
+          #   fi
+          # done
+          # echo "${short_link}" >> short.json
+          # key="$(jq -r -R 'fromjson? | .key' < short.json)"
+          # echo "/${key}"
+          # link="${{ secrets.SHORTER_API }}/${key}"
+          link="${{ secrets.PROXY_URL }}/${digit}/${encrypted}"
           curl -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \

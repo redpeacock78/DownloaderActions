@@ -260,9 +260,9 @@ jobs:
           digit="$(jq -r -R 'fromjson? | .digit' < upload.json)"
           encrypted="$(jq -r -R 'fromjson? | .encrypted' < upload.json)"
           proxy_link="${{ secrets.PROXY_URL }}/${digit}/${encrypted}"
+          json=""
           retry=0
           flag=false
-          json=""
           until "${flag}" || (( "${retry}" == 1000 )); do
             echo "Retry count: ${retry}"
             echo "Flag status: ${flag}"
@@ -270,8 +270,14 @@ jobs:
             json="$(curl -s -m 3000000 --retry 1000 --retry-all-errors -X POST -H "Accept: application/json" -H "Content-type: application/json" ${{ secrets.SHORTER_API }}/api/v0/shorter -d "${json_payload}")"
             if jq -e . <<< "${json}" >/dev/null 2>&1; then
               key="$(jq -r '.key // empty' <<< "${json}")"
-              if [[ -n "${key}" ]]; then
-                flag=true
+              url="$(jq -r '.url // empty' <<< "${json}")"
+              if [[ -n "${key}" && -n "${url}" ]]; then
+                if [[ "${proxy_link}" == "${url}" ]]; then
+                  flag=true
+                else
+                  ((retry++)) || true
+                  sleep 1
+                fi
               else
                 ((retry++)) || true
                 sleep 1

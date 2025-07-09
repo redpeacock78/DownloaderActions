@@ -290,7 +290,11 @@ jobs:
           echo "${json}" >> short.json
           key="$(jq -r -R 'fromjson? | .key' < short.json)"
           echo "/${key}"
-          link="${{ secrets.SHORTER_API }}/${key}"
+          if [[ -n "${key}" ]]; then
+            link="${{ secrets.SHORTER_API }}/${key}"
+          else
+            link="${proxy_link}"
+          fi
           curl -s -X POST \
             ${{ secrets.ENDPOINT_URL }} \
             -H "Accept: application/json" \

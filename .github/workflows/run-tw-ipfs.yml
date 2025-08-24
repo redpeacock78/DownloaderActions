@@ -193,7 +193,7 @@ jobs:
           cd download && \
           echo "path=$(pwd)" >> "${GITHUB_OUTPUT}"
       - name: Download files
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: outputs-${{ github.run_number }}
           path: ${{ steps.dir.outputs.path }}
@@ -294,7 +294,7 @@ jobs:
           cd download && \
           echo "path=$(pwd)" >> "${GITHUB_OUTPUT}"
       - name: Download files
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: outputs-${{ github.run_number }}
           path: ${{ steps.dir.outputs.path }}
@@ -393,7 +393,7 @@ jobs:
           cd download && \
           echo "path=$(pwd)" >> "${GITHUB_OUTPUT}"
       - name: Download files
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: outputs-${{ github.run_number }}
           path: ${{ steps.dir.outputs.path }}
@@ -488,7 +488,7 @@ jobs:
           cd download && \
           echo "path=$(pwd)" >> "${GITHUB_OUTPUT}"
       - name: Download files
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: outputs-${{ github.run_number }}
           path: ${{ steps.dir.outputs.path }}

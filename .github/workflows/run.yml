@@ -269,9 +269,10 @@ jobs:
             json_payload="$(jq -n --arg url "${proxy_link}" '{url: $url}')"
             json="$(curl -s -m 3000000 --retry 1000 --retry-all-errors -X POST -H "Accept: application/json" -H "Content-type: application/json" ${{ secrets.SHORTER_API }}/api/v0/shorter -d "${json_payload}")"
             if jq -e . <<< "${json}" >/dev/null 2>&1; then
-              key="$(jq -r '.key // empty' <<< "${json}")"
-              url="$(jq -r '.url // empty' <<< "${json}")"
-              if [[ -n "${key}" && -n "${url}" ]]; then
+              status="$(jq -r '.status // empty' <<< "${json}")"
+              code="$(jq -r '.code // empty' <<< "${json}")"
+              if [[ "${status}" != "error" && "${code}" != "502" ]]; then
+                url="$(jq -r '.url // empty' <<< "${json}")"
                 if [[ "${proxy_link}" == "${url}" ]]; then
                   flag=true
                 else

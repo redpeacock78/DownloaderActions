@@ -186,14 +186,26 @@ jobs:
                 fi
               done
               if [[ "${flag}" == "0" ]]; then
+                job=0 && \
                 IFS=$'\n' && \
                 for file_name in $(ls); do
                   if [[ "$(file --mime-type "${file_name}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "image/" ]]; then
-                    sharp -i "${file_name}" -f avif -q 17 --effort 6 -o "${dir_name}/" > /dev/null 2>&1
+                    while (( "$(jobs -r | wc -l)" >= 5 )); do
+                      sleep 1
+                    done
+                    echo "Job count: ${job}"
+                    ((job++)) || true
+                    sharp -i "${file_name}" -f avif -q 17 --effort 6 -o "${dir_name}/" > /dev/null 2>&1 &
                   else
-                    cp "${file_name}" "${dir_name}/${file_name}"
+                    while (( "$(jobs -r | wc -l)" >= 5 )); do
+                      sleep 1
+                    done
+                    echo "Job count: ${job}"
+                    ((job++)) || true
+                    cp "${file_name}" "${dir_name}/${file_name}" &
                   fi
                 done
+                wait
                 cd .. && \
                 rm -rf "${file}" && \
                 rm -rf "${file%.*}_origin/" && \

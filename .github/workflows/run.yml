@@ -155,7 +155,7 @@ jobs:
               :
             else
               ffmpeg -i "${file}" -fs 100MB -loglevel error "${file%.*}_cps.${file##*.}"
-              if (( "$(wc -c < "${file}")" <= "$(wc -c < "${file%.*}_cps.${file##*.}" )); then
+              if (( "$(wc -c < "${file}")" <= "$(wc -c < "${file%.*}_cps.${file##*.}")" )); then
                 rm -rf "${file%.*}_cps.${file##*.}"
               else
                 rm -rf "${file}" && \

@@ -34,7 +34,7 @@ jobs:
             sudo apt-get install -y ${is_nkf} ${is_rar} ${is_unar} ${is_ffmpeg}
           fi
           npm i -g npm@latest --registry=https://registry.npmjs.org && \
-          type sharp > /dev/null 2>&1 || npm i -g sharp-cli@4.2.0
+          type sharp > /dev/null 2>&1 || npm i -g --allow-scripts=sharp sharp-cli@4.2.0
       - name: Masking Secrets
         shell: bash
         run: |

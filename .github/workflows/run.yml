@@ -22,6 +22,8 @@ jobs:
       #   uses: FedericoCarboni/setup-ffmpeg@v3
       - name: Setup Library
         shell: bash
+        env:
+          npm_config_build_from_source: true
         run: |
           is_nkf=$(type nkf > /dev/null 2>&1 && : || echo -n nkf)
           is_rar=$(type rar > /dev/null 2>&1 && : || echo -n rar)

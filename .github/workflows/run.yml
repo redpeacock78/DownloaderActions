@@ -22,12 +22,10 @@ jobs:
       #   uses: FedericoCarboni/setup-ffmpeg@v3
       - name: Setup Library
         shell: bash
-        env:
-          npm_config_build_from_source: true
         run: |
           is_nkf=$(type nkf > /dev/null 2>&1 && : || echo -n nkf)
           is_rar=$(type rar > /dev/null 2>&1 && : || echo -n rar)
-          is_unar=$(type unar > /dev/null 2>&1 && : || echo -n unar)
+          is_unar=$(type unar、 > /dev/null 2>&1 && : || echo -n unar)
           is_ffmpeg=$(type ffmpeg > /dev/null 2>&1 && : || echo -n ffmpeg)
           if [[ ${is_nkf} == "" ]] && [[ ${is_rar} == "" ]] && [[ ${is_unar} == "" ]] && [[ ${is_ffmpeg} == "" ]]; then
             :
@@ -35,7 +33,7 @@ jobs:
             sudo apt-get update && \
             sudo apt-get install -y ${is_nkf} ${is_rar} ${is_unar} ${is_ffmpeg}
           fi
-          npm i -g npm@7 --registry=https://registry.npmjs.org && \
+          npm i -g npm@latest --registry=https://registry.npmjs.org && \
           type sharp > /dev/null 2>&1 || npm i -g sharp-cli@4.2.0
       - name: Masking Secrets
         shell: bash

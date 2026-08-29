@@ -57,7 +57,8 @@ jobs:
             --network proxy-net \
             dockurr/tor:latest && \
           sleep 20
-          docker run -it -d \
+          docker run -it -d 
+            -p 8080:8080 \
             --name gost-proxy \
             --network proxy-net \
             gogost/gost -L :8080 -F socks5://tor-proxy:9050 && \

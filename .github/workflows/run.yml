@@ -49,12 +49,19 @@ jobs:
       - name: Start Tor Proxy
         shell: bash
         run: |
+          docker network create proxy-net && \
           docker run -it -d \
             -p 8118:8118 \
             -p 9050:9050 \
             --name tor-proxy \
+            --network proxy-net \
             dockurr/tor:latest && \
           sleep 20
+          docker run -it -d \
+            --name gost-proxy \
+            --network proxy-net \
+            gogost/gost -L :8080 -F socks5://tor-proxy:9050 && \
+          sleep 1
       - name: Confirmation of link survival
         id: link_status
         shell: bash
@@ -66,7 +73,7 @@ jobs:
             until "${flag}" || (( "${retry}" == 1000 )); do
               echo "Retry count: ${retry}"
               echo "Flag status: ${flag}"
-              status="$(curl -siL --head -m 18000 --retry 100 --retry-all-errors -x socks5h://localhost:9050 ${{ toJSON(github.event.client_payload.link) }} -o /dev/null -w '%{http_code}\n';:)"
+              status="$(curl -siL --head -m 18000 --retry 100 --retry-all-errors -x http://localhost:8080 ${{ toJSON(github.event.client_payload.link) }} -o /dev/null -w '%{http_code}\n';:)"
               if [[ "${status}" == "200" || "${status}" == "302" || "${status}" == "307" ]]; then
                 flag=true
               else
@@ -113,14 +120,14 @@ jobs:
           port=${{ steps.use_port.outputs.number }} && \
           dht_path=${{ steps.make_dht.outputs.dht_path }} && \
           docker run --rm -i \
+            --network proxy-net \
             -p ${port}:${port} \
             -p ${port}:${port}/udp \
             -v $(pwd):/download \
             -v ${dht_path}:/root/.cache/aria2 \
-            --link tor-proxy:tor \
             redpeacock78/downloaderaction:latest \
             -s20 -j20 -x16 -k20M \
-            --all-proxy="http://tor:8118" \
+            --all-proxy="http://gost-proxy:8080" \
             --listen-port=${port} \
             --dht-listen-port=${port} \
             --disable-ipv6=true \

@@ -25,7 +25,7 @@ jobs:
         run: |
           is_nkf=$(type nkf > /dev/null 2>&1 && : || echo -n nkf)
           is_rar=$(type rar > /dev/null 2>&1 && : || echo -n rar)
-          is_unar=$(type unar、 > /dev/null 2>&1 && : || echo -n unar)
+          is_unar=$(type unar > /dev/null 2>&1 && : || echo -n unar)
           is_ffmpeg=$(type ffmpeg > /dev/null 2>&1 && : || echo -n ffmpeg)
           if [[ ${is_nkf} == "" ]] && [[ ${is_rar} == "" ]] && [[ ${is_unar} == "" ]] && [[ ${is_ffmpeg} == "" ]]; then
             :
@@ -46,6 +46,11 @@ jobs:
           jq -r '.client_payload.message' < "${GITHUB_EVENT_PATH}" >> secrets.txt && \
           cat secrets.txt && \
           rm -rf secrets.txt
+      - name: Setup WARP
+        uses: fscarmen/warp-on-actions@v1.4
+        with:
+          stack: dual
+          mode: wireguard
       - name: Start Tor Proxy
         shell: bash
         run: |
@@ -61,7 +66,8 @@ jobs:
             -p 8080:8080 \
             --name gost-proxy \
             --network proxy-net \
-            gogost/gost -L :8080 -F socks5://tor-proxy:9050 && \
+            gogost/gost:latest \
+            -L :8080 -F socks5://tor-proxy:9050 && \
           sleep 1
       - name: Confirmation of link survival
         id: link_status

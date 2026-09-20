@@ -213,7 +213,7 @@ jobs:
                 max_jobs=1
                 cpu_cores="$(nproc)"
                 cpu_per_job=100
-                rss_per_job_kb=1048576
+                rss_per_job_kb=4194304
                 reserve_kb=4194304
                 target_cpu_percent=75
                 # ponytail: keep 4 GiB and 25% CPU headroom; use per-image cgroups if variance still causes OOM
@@ -226,14 +226,15 @@ jobs:
 
                 calibrate_job() {
                   local pid="$1"
-                  local sample cpu rss
+                  local sample state cpu rss
                   local peak_cpu=0
                   local peak_rss=0
                   calibration_ok=false
                   for _ in 1 2 3 4 5; do
-                    sample="$(ps -p "${pid}" -o pcpu=,rss= 2>/dev/null || true)"
+                    sample="$(ps -p "${pid}" -o stat=,pcpu=,rss= 2>/dev/null || true)"
                     if [[ -n "${sample}" ]]; then
-                      read -r cpu rss <<< "${sample}"
+                      read -r state cpu rss <<< "${sample}"
+                      [[ "${state}" == Z* ]] && break
                       if [[ "${rss}" =~ ^[0-9]+$ ]] && [[ "${cpu}" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
                         peak_cpu="$(awk -v current="${cpu}" -v peak="${peak_cpu}" 'BEGIN { print (current > peak ? current : peak) }')"
                         (( rss > peak_rss )) && peak_rss="${rss}"
@@ -241,7 +242,7 @@ jobs:
                     elif ! kill -0 "${pid}" 2>/dev/null; then
                       break
                     fi
-                    sleep 1
+                    sleep 0.2
                   done
                   if (( peak_rss > 0 )); then
                     calibration_ok=true
@@ -295,11 +296,12 @@ jobs:
                   if [[ "${calibrated}" == "false" ]]; then
                     launch_file "${file_name}"
                     calibrate_job "${launched_pid}"
+                    calibrated=true
                     if [[ "${calibration_ok}" == "true" ]]; then
-                      calibrated=true
                       update_max_jobs
                     else
-                      max_jobs=1
+                      max_jobs=2
+                      echo "Calibration: first job was too short; using conservative limit ${max_jobs}"
                     fi
                     continue
                   fi

@@ -209,24 +209,97 @@ jobs:
                 fi
               done
               if [[ "${flag}" == "0" ]]; then
-                job=0 && \
-                IFS=$'\n' && \
-                for file_name in $(ls); do
+                job=0
+                max_jobs=1
+                cpu_cores="$(nproc)"
+                cpu_per_job=100
+                rss_per_job_kb=1048576
+                reserve_kb=4194304
+                target_cpu_percent=75
+                # ponytail: keep 4 GiB and 25% CPU headroom; use per-image cgroups if variance still causes OOM
+                first_job=true
+
+                running_jobs() {
+                  jobs -rp | wc -l
+                }
+
+                calibrate_job() {
+                  local pid="$1"
+                  local sample cpu rss
+                  local peak_cpu=0
+                  local peak_rss=0
+                  for _ in 1 2 3 4 5; do
+                    sample="$(ps -p "${pid}" -o pcpu=,rss= 2>/dev/null || true)"
+                    if [[ -n "${sample}" ]]; then
+                      read -r cpu rss <<< "${sample}"
+                      if [[ "${rss}" =~ ^[0-9]+$ ]] && [[ "${cpu}" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
+                        peak_cpu="$(awk -v current="${cpu}" -v peak="${peak_cpu}" 'BEGIN { print current > peak ? current : peak }')"
+                        (( rss > peak_rss )) && peak_rss="${rss}"
+                      fi
+                    fi
+                    sleep 1
+                  done
+                  if (( peak_rss > 0 )); then
+                    if [[ "$(awk -v cpu="${peak_cpu}" 'BEGIN { print cpu > 0 ? 1 : 0 }')" == "1" ]]; then
+                      cpu_per_job="${peak_cpu}"
+                    fi
+                    rss_per_job_kb=$((peak_rss * 2))
+                    echo "Calibration: ${cpu_per_job}% CPU, ${rss_per_job_kb} KB RSS budget per job"
+                  else
+                    echo "Calibration: first job finished before sampling; keeping one job"
+                  fi
+                }
+
+                update_max_jobs() {
+                  local running total_cpu background_cpu available_kb cpu_capacity memory_slots next_jobs
+                  running="$(running_jobs)"
+                  total_cpu="$(ps -eo pcpu= 2>/dev/null | awk '{sum += $1} END {printf "%d\n", sum + 0}')"
+                  available_kb="$(awk '/^MemAvailable:/ {print $2; exit}' /proc/meminfo)"
+                  background_cpu="$(awk -v used="${total_cpu}" -v running="${running}" -v each="${cpu_per_job}" 'BEGIN { background = used - running * each; if (background < 0) background = 0; print background }')"
+                  cpu_capacity="$(awk -v budget="$((cpu_cores * target_cpu_percent))" -v background="${background_cpu}" -v each="${cpu_per_job}" 'BEGIN { slots = int((budget - background) / each); if (slots < 1) slots = 1; print slots }')"
+                  if (( available_kb > reserve_kb )); then
+                    memory_slots=$(( (available_kb - reserve_kb) / rss_per_job_kb ))
+                  else
+                    memory_slots=0
+                  fi
+                  next_jobs="${cpu_capacity}"
+                  (( next_jobs > running + memory_slots )) && next_jobs=$((running + memory_slots))
+                  (( next_jobs < running )) && next_jobs="${running}"
+                  (( next_jobs > 5 )) && next_jobs=5
+                  (( next_jobs < 1 )) && next_jobs=1
+                  if (( next_jobs != max_jobs )); then
+                    echo "Resources: ${total_cpu}% CPU, $((available_kb / 1024)) MiB available, ${running} running, max ${next_jobs}"
+                  fi
+                  max_jobs="${next_jobs}"
+                }
+
+                launch_file() {
+                  local file_name="$1"
+                  echo "Job count: ${job}"
+                  ((job++)) || true
                   if [[ "$(file --mime-type "${file_name}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "image/" ]]; then
-                    while (( "$(jobs -r | wc -l)" >= 5 )); do
-                      sleep 1
-                    done
-                    echo "Job count: ${job}"
-                    ((job++)) || true
                     sharp -i "${file_name}" -f avif -q 17 --effort 6 -o "${dir_name}/" > /dev/null 2>&1 &
                   else
-                    while (( "$(jobs -r | wc -l)" >= 5 )); do
-                      sleep 1
-                    done
-                    echo "Job count: ${job}"
-                    ((job++)) || true
                     cp "${file_name}" "${dir_name}/${file_name}" &
                   fi
+                  launched_pid="$!"
+                }
+
+                IFS=$'\n'
+                for file_name in $(ls); do
+                  if [[ "${first_job}" == "true" ]]; then
+                    launch_file "${file_name}"
+                    calibrate_job "${launched_pid}"
+                    first_job=false
+                    update_max_jobs
+                    continue
+                  fi
+                  while :; do
+                    update_max_jobs
+                    (( "$(running_jobs)" < max_jobs )) && break
+                    sleep 1
+                  done
+                  launch_file "${file_name}"
                 done
                 wait
                 cd .. && \

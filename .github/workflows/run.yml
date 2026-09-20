@@ -217,7 +217,8 @@ jobs:
                 reserve_kb=4194304
                 target_cpu_percent=75
                 # ponytail: keep 4 GiB and 25% CPU headroom; use per-image cgroups if variance still causes OOM
-                first_job=true
+                calibrated=false
+                calibration_ok=false
 
                 running_jobs() {
                   jobs -rp | wc -l
@@ -228,19 +229,23 @@ jobs:
                   local sample cpu rss
                   local peak_cpu=0
                   local peak_rss=0
+                  calibration_ok=false
                   for _ in 1 2 3 4 5; do
                     sample="$(ps -p "${pid}" -o pcpu=,rss= 2>/dev/null || true)"
                     if [[ -n "${sample}" ]]; then
                       read -r cpu rss <<< "${sample}"
                       if [[ "${rss}" =~ ^[0-9]+$ ]] && [[ "${cpu}" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
-                        peak_cpu="$(awk -v current="${cpu}" -v peak="${peak_cpu}" 'BEGIN { print current > peak ? current : peak }')"
+                        peak_cpu="$(awk -v current="${cpu}" -v peak="${peak_cpu}" 'BEGIN { print (current > peak ? current : peak) }')"
                         (( rss > peak_rss )) && peak_rss="${rss}"
                       fi
+                    elif ! kill -0 "${pid}" 2>/dev/null; then
+                      break
                     fi
                     sleep 1
                   done
                   if (( peak_rss > 0 )); then
-                    if [[ "$(awk -v cpu="${peak_cpu}" 'BEGIN { print cpu > 0 ? 1 : 0 }')" == "1" ]]; then
+                    calibration_ok=true
+                    if [[ "$(awk -v cpu="${peak_cpu}" 'BEGIN { print (cpu > 0 ? 1 : 0) }')" == "1" ]]; then
                       cpu_per_job="${peak_cpu}"
                     fi
                     rss_per_job_kb=$((peak_rss * 2))
@@ -278,7 +283,7 @@ jobs:
                   echo "Job count: ${job}"
                   ((job++)) || true
                   if [[ "$(file --mime-type "${file_name}" | awk -F ": " '{sub(/^ /,"",$2);print $2}')" =~ "image/" ]]; then
-                    sharp -i "${file_name}" -f avif -q 17 --effort 6 -o "${dir_name}/" > /dev/null 2>&1 &
+                    sharp -i "${file_name}" -f avif -q 17 --effort 6 -o "${dir_name}/" &
                   else
                     cp "${file_name}" "${dir_name}/${file_name}" &
                   fi
@@ -287,11 +292,15 @@ jobs:
 
                 IFS=$'\n'
                 for file_name in $(ls); do
-                  if [[ "${first_job}" == "true" ]]; then
+                  if [[ "${calibrated}" == "false" ]]; then
                     launch_file "${file_name}"
                     calibrate_job "${launched_pid}"
-                    first_job=false
-                    update_max_jobs
+                    if [[ "${calibration_ok}" == "true" ]]; then
+                      calibrated=true
+                      update_max_jobs
+                    else
+                      max_jobs=1
+                    fi
                     continue
                   fi
                   while :; do
